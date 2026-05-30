@@ -25,8 +25,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # เขียน firebase-config.js จาก GitHub Secrets (ไฟล์นี้ track ใน git ด้วย empty fallback)
-      - name: Write Firebase config from secrets
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      # สร้าง dist/ แยก แล้วเขียน Firebase config จริงลงไป (upload จาก dist/ ไม่ใช่ repo root)
+      - name: Build dist with Firebase config
         env:
           FIREBASE_API_KEY:             ${{ secrets.FIREBASE_API_KEY }}
           FIREBASE_AUTH_DOMAIN:         ${{ secrets.FIREBASE_AUTH_DOMAIN }}
@@ -37,7 +40,9 @@ jobs:
           FIREBASE_APP_ID:              ${{ secrets.FIREBASE_APP_ID }}
         run: |
           [ -z "$FIREBASE_DATABASE_URL" ] && echo "ERROR: FIREBASE_DATABASE_URL secret not set" && exit 1
-          cat > firebase-config.js << CFGEOF
+          mkdir dist
+          rsync -a --exclude='.git' --exclude='dist' . dist/
+          cat > dist/firebase-config.js << CFGEOF
           window.FIREBASE_CFG = {
             apiKey:            "${FIREBASE_API_KEY}",
             authDomain:        "${FIREBASE_AUTH_DOMAIN}",
@@ -48,15 +53,12 @@ jobs:
             appId:             "${FIREBASE_APP_ID}"
           };
           CFGEOF
-          echo "firebase-config.js written ($(wc -c < firebase-config.js) bytes)"
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
+          echo "dist/firebase-config.js written ($(wc -c < dist/firebase-config.js) bytes)"
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: 'dist'
 
       - name: Deploy to GitHub Pages
         id: deployment
