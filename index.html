@@ -332,12 +332,14 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
       <!-- Tab: Manual -->
       <div class="tab-panel active" id="tab-manual">
         <div class="form-hint">
-          <b>วิธีเพิ่มคำศัพท์ทีละคำ</b><br>
-          <span style="color:var(--tx2)">① กรอก</span> <b>คำอังกฤษ</b> และ <b>คำแปลไทย</b> (จำเป็นต้องกรอก)<br>
-          <span style="color:var(--tx2)">② กรอก</span> <b>การออกเสียง IPA</b> เช่น <code>/ˈɡreɪt.fəl/</code> (ไม่บังคับ)<br>
-          <span style="color:var(--tx2)">③ เลือก</span> <b>ระดับ</b> (ม.1–ม.6) และ <b>หมวดหมู่</b><br>
-          <span style="color:var(--tx2)">④ กรอก</span> <b>ประโยคตัวอย่าง</b> ภาษาอังกฤษและคำแปล (ไม่บังคับ)<br>
-          <span style="color:var(--tx2)">⑤ กด</span> <b>เพิ่มคำศัพท์</b>
+          <b>คุณสมบัติแต่ละช่อง</b><br>
+          <b>คำอังกฤษ *</b> — คำหรือวลีที่ต้องการฝึก เช่น <code>Grateful</code>, <code>give up</code><br>
+          <b>คำแปลไทย *</b> — ความหมายภาษาไทย เช่น <code>รู้สึกขอบคุณ</code><br>
+          <b>การออกเสียง</b> — สัญลักษณ์ IPA เช่น <code>/ˈɡreɪt.fəl/</code> (ไม่บังคับ)<br>
+          <b>ระดับชั้น</b> — ม.1–ม.6 ตามความยากของคำ<br>
+          <b>หมวดหมู่</b> — กลุ่มที่จะใช้กรองการ์ด เช่น คำศัพท์ทั่วไป, Idioms<br>
+          <b>ประโยคตัวอย่าง (Eng)</b> — ประโยคที่ใช้คำนั้น เช่น <code>I am grateful for your help.</code> (ไม่บังคับ)<br>
+          <b>แปลประโยค (ไทย)</b> — คำแปลของประโยค เช่น <code>ฉันขอบคุณสำหรับความช่วยเหลือ</code> (ไม่บังคับ)
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -387,15 +389,16 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
       <!-- Tab: Paste -->
       <div class="tab-panel" id="tab-paste">
         <div class="form-hint">
-          <b>วิธีวางข้อความจากแหล่งอื่น</b><br>
-          <span style="color:var(--tx2)">① คัดลอกรายการคำศัพท์</span> จาก LINE · Notes · Google Keep · Word<br>
-          <span style="color:var(--tx2)">② วางลงในช่องด้านล่าง</span> (1 คำต่อ 1 บรรทัด)<br>
-          <span style="color:var(--tx2)">③ เลือกหมวดหมู่</span> ที่ต้องการ<br>
-          <span style="color:var(--tx2)">④ กด</span> <b>นำเข้าคำศัพท์</b><br><br>
-          <b>รูปแบบที่รองรับ</b> (เลือกแบบใดก็ได้):<br>
-          <code>Absent - ขาด / ไม่อยู่</code> &nbsp;(คั่นด้วย -)<br>
-          <code>Polite, สุภาพ</code> &nbsp;(คั่นด้วย ,)<br>
-          <code>Curious&nbsp;&nbsp;&nbsp;อยากรู้</code> &nbsp;(คั่นด้วย Tab)
+          <b>วิธีวางข้อความ</b> — 1 คำต่อ 1 บรรทัด แล้วกด <b>นำเข้าคำศัพท์</b><br><br>
+          <b>แบบย่อ</b> (ได้แค่คำ + คำแปล) เลือกรูปแบบใดก็ได้:<br>
+          <code>Absent - ขาด / ไม่อยู่</code> &nbsp;คั่นด้วย <b> - </b><br>
+          <code>Polite, สุภาพ</code> &nbsp;คั่นด้วย <b>,</b><br>
+          <code>Curious[Tab]อยากรู้</code> &nbsp;คั่นด้วย <b>Tab</b><br><br>
+          <b>แบบเต็ม</b> (ใส่ครบทุกคุณสมบัติ) — คั่นด้วย <b>Tab</b> ทุกช่อง:<br>
+          <code style="font-size:11px">คำอังกฤษ[Tab]คำแปลไทย[Tab]การออกเสียง[Tab]ประโยค Eng[Tab]ประโยคไทย[Tab]ระดับ</code><br>
+          ตัวอย่าง:<br>
+          <code style="font-size:11px">Grateful[Tab]รู้สึกขอบคุณ[Tab]/ˈɡreɪt.fəl/[Tab]I am grateful for your help.[Tab]ฉันขอบคุณสำหรับความช่วยเหลือ[Tab]ม.3</code><br><br>
+          <span style="color:var(--tx3);font-size:12px">หมวดหมู่ใช้จาก dropdown ด้านล่าง / ช่องว่างใส่ได้แค่ - ไม่ต้องกรอก</span>
         </div>
         <div class="form-group">
           <label class="form-label">หมวดหมู่</label>
@@ -419,17 +422,22 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
       <div class="tab-panel" id="tab-file">
         <div class="form-hint">
           <b>วิธีนำเข้าจากไฟล์</b><br>
-          <span style="color:var(--tx2)">① เตรียมไฟล์</span> .txt หรือ .csv บนมือถือหรือคอมพิวเตอร์<br>
-          <span style="color:var(--tx2)">② เลือกหมวดหมู่</span> ที่ต้องการ<br>
-          <span style="color:var(--tx2)">③ กด "แตะเพื่อเลือกไฟล์"</span> แล้วเลือกไฟล์จาก Files / Downloads<br>
-          <span style="color:var(--tx2)">④ ตรวจสอบ</span> จำนวนคำที่แสดงขึ้นมา แล้วกด <b>นำเข้าคำศัพท์</b><br><br>
-          <b>รูปแบบไฟล์ที่รองรับ</b><br>
-          <b>.txt</b> — 1 บรรทัดต่อ 1 คำ รูปแบบเดียวกับแท็บ "วางข้อความ"<br>
-          &nbsp;&nbsp;<code>Absent - ขาด / ไม่อยู่</code><br>
-          <b>.csv</b> — แต่ละคอลัมน์คั่นด้วย comma<br>
-          &nbsp;&nbsp;คอลัมน์ 1: คำอังกฤษ &nbsp;|&nbsp; 2: คำแปลไทย<br>
-          &nbsp;&nbsp;คอลัมน์ 3: การออกเสียง (ไม่บังคับ) &nbsp;|&nbsp; 4: ประโยคตัวอย่าง (ไม่บังคับ)<br>
-          &nbsp;&nbsp;<code>Grateful,รู้สึกขอบคุณ,/ˈɡreɪt.fəl/,I am grateful for your help.</code>
+          <span style="color:var(--tx2)">① เตรียมไฟล์</span> .txt หรือ .csv (ดูรูปแบบด้านล่าง)<br>
+          <span style="color:var(--tx2)">② เลือกหมวดหมู่</span> ที่ต้องการจาก dropdown<br>
+          <span style="color:var(--tx2)">③ แตะ "เลือกไฟล์"</span> แล้วเลือกไฟล์จาก Files / Downloads<br>
+          <span style="color:var(--tx2)">④ ตรวจสอบ</span> จำนวนคำ แล้วกด <b>นำเข้าคำศัพท์</b><br><br>
+          <b>ไฟล์ .txt</b> — รูปแบบเดียวกับแท็บ "วางข้อความ" (ดูรายละเอียดที่นั่น)<br><br>
+          <b>ไฟล์ .csv</b> — คั่นด้วย comma, 1 บรรทัดต่อ 1 คำ (ใส่ header หรือไม่ก็ได้)<br>
+          ลำดับคอลัมน์:<br>
+          &nbsp;<b>1. คำอังกฤษ *</b> — เช่น <code>Grateful</code><br>
+          &nbsp;<b>2. คำแปลไทย *</b> — เช่น <code>รู้สึกขอบคุณ</code><br>
+          &nbsp;<b>3. การออกเสียง</b> — เช่น <code>/ˈɡreɪt.fəl/</code> (เว้นว่างได้)<br>
+          &nbsp;<b>4. ประโยคตัวอย่าง (Eng)</b> — (เว้นว่างได้)<br>
+          &nbsp;<b>5. แปลประโยค (ไทย)</b> — (เว้นว่างได้)<br>
+          &nbsp;<b>6. ระดับชั้น</b> — ม.1–ม.6 (เว้นว่าง = ม.1)<br>
+          ตัวอย่างบรรทัด:<br>
+          <code style="font-size:11px">Grateful,รู้สึกขอบคุณ,/ˈɡreɪt.fəl/,I am grateful for your help.,ฉันขอบคุณสำหรับความช่วยเหลือ,ม.3</code><br>
+          <span style="color:var(--tx3);font-size:12px">หมวดหมู่ใช้จาก dropdown ด้านล่าง (ไม่มีคอลัมน์ cat ใน CSV)</span>
         </div>
         <div class="form-group">
           <label class="form-label">หมวดหมู่</label>
@@ -914,12 +922,19 @@ function addManual() {
 // parse text
 function parseText(text, cat = 'คำของฉัน') {
   return text.split('\n').map(l => l.trim()).filter(Boolean).reduce((acc, line) => {
-    let en, th, rest;
-    if (line.includes('\t'))          { [en, ...rest] = line.split('\t'); th = rest.join('\t'); }
-    else if (/\s+-\s+/.test(line))   { [en, th] = line.split(/\s+-\s+/); }
-    else if (line.includes(','))      { [en, ...rest] = line.split(','); th = rest.join(','); }
+    let en, th, ph = '', ex = '', exth = '', lv = 'ม.1', rest;
+    if (line.includes('\t')) {
+      const parts = line.split('\t').map(s => s.trim());
+      if (parts.length >= 6) {
+        // full format: en [tab] th [tab] ph [tab] ex [tab] exth [tab] lv
+        [en, th, ph, ex, exth, lv] = parts;
+      } else {
+        [en, ...rest] = parts; th = rest.join(' ');
+      }
+    } else if (/\s+-\s+/.test(line)) { [en, th] = line.split(/\s+-\s+/); }
+    else if (line.includes(','))     { [en, ...rest] = line.split(','); th = rest.join(','); }
     en = en?.trim(); th = th?.trim();
-    if (en && th) acc.push({ en, th, ph:'', ex:'', exth:'', lv:'ม.1', cat });
+    if (en && th) acc.push({ en, th, ph: ph||'', ex: ex||'', exth: exth||'', lv: ALLOWED_LV.includes(lv) ? lv : 'ม.1', cat });
     return acc;
   }, []);
 }
