@@ -508,89 +508,35 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
 </div>
 
 <script>
-const ALL = [
-  // ── คำศัพท์ทั่วไป ──
-  {en:"Absent",ph:"/ˈæb.sənt/",th:"ขาด / ไม่อยู่",ex:"He was absent from school today.",exth:"เขาขาดเรียนวันนี้",lv:"ม.1",cat:"คำศัพท์ทั่วไป"},
-  {en:"Polite",ph:"/pəˈlaɪt/",th:"สุภาพ / มีมารยาท",ex:"She is always polite to everyone.",exth:"เธอสุภาพกับทุกคนเสมอ",lv:"ม.1",cat:"คำศัพท์ทั่วไป"},
-  {en:"Curious",ph:"/ˈkjʊər.i.əs/",th:"อยากรู้อยากเห็น",ex:"Children are naturally curious.",exth:"เด็กๆ มักอยากรู้อยากเห็นตามธรรมชาติ",lv:"ม.1",cat:"คำศัพท์ทั่วไป"},
-  {en:"Schedule",ph:"/ˈʃed.juːl/",th:"ตารางเวลา / กำหนดการ",ex:"Check the schedule before you go.",exth:"ตรวจตารางเวลาก่อนไป",lv:"ม.2",cat:"คำศัพท์ทั่วไป"},
-  {en:"Responsible",ph:"/rɪˈspɒn.sɪ.bəl/",th:"มีความรับผิดชอบ",ex:"Be responsible for your own actions.",exth:"รับผิดชอบต่อการกระทำของตัวเอง",lv:"ม.2",cat:"คำศัพท์ทั่วไป"},
-  {en:"Anxious",ph:"/ˈæŋk.ʃəs/",th:"วิตกกังวล / กระวนกระวาย",ex:"She felt anxious before the exam.",exth:"เธอรู้สึกวิตกกังวลก่อนสอบ",lv:"ม.2",cat:"คำศัพท์ทั่วไป"},
-  {en:"Generous",ph:"/ˈdʒen.ər.əs/",th:"ใจกว้าง / เอื้อเฟื้อ",ex:"He is generous with his time and money.",exth:"เขาเอื้อเฟื้อทั้งเวลาและเงินทอง",lv:"ม.3",cat:"คำศัพท์ทั่วไป"},
-  {en:"Efficient",ph:"/ɪˈfɪʃ.ənt/",th:"มีประสิทธิภาพ",ex:"A good worker must be efficient.",exth:"พนักงานที่ดีต้องมีประสิทธิภาพ",lv:"ม.3",cat:"คำศัพท์ทั่วไป"},
-  {en:"Grateful",ph:"/ˈɡreɪt.fəl/",th:"รู้สึกขอบคุณ / กตัญญู",ex:"I am grateful for your help.",exth:"ฉันรู้สึกขอบคุณสำหรับความช่วยเหลือ",lv:"ม.3",cat:"คำศัพท์ทั่วไป"},
-  {en:"Negotiate",ph:"/nɪˈɡəʊ.ʃi.eɪt/",th:"เจรจา / ต่อรอง",ex:"They negotiated a new contract.",exth:"พวกเขาเจรจาสัญญาฉบับใหม่",lv:"ม.4",cat:"คำศัพท์ทั่วไป"},
-  {en:"Volunteer",ph:"/ˌvɒl.ənˈtɪər/",th:"อาสาสมัคร / จิตอาสา",ex:"She volunteers at the local hospital.",exth:"เธออาสาทำงานที่โรงพยาบาลท้องถิ่น",lv:"ม.4",cat:"คำศัพท์ทั่วไป"},
-  {en:"Environment",ph:"/ɪnˈvaɪ.rən.mənt/",th:"สิ่งแวดล้อม",ex:"We must protect the environment.",exth:"เราต้องปกป้องสิ่งแวดล้อม",lv:"ม.4",cat:"คำศัพท์ทั่วไป"},
-  {en:"Sustainable",ph:"/səˈsteɪ.nə.bəl/",th:"ยั่งยืน / คงทน",ex:"We need sustainable energy sources.",exth:"เราต้องการแหล่งพลังงานที่ยั่งยืน",lv:"ม.5",cat:"คำศัพท์ทั่วไป"},
-  {en:"Inspire",ph:"/ɪnˈspaɪər/",th:"สร้างแรงบันดาลใจ",ex:"Great leaders inspire others to act.",exth:"ผู้นำที่ดีสร้างแรงบันดาลใจให้ผู้อื่น",lv:"ม.5",cat:"คำศัพท์ทั่วไป"},
-  {en:"Consequence",ph:"/ˈkɒn.sɪ.kwəns/",th:"ผลที่ตามมา / ผลลัพธ์",ex:"Think about the consequences of your actions.",exth:"คิดถึงผลที่ตามมาจากการกระทำของคุณ",lv:"ม.5",cat:"คำศัพท์ทั่วไป"},
-  {en:"Accomplish",ph:"/əˈkʌm.plɪʃ/",th:"บรรลุ / ประสบความสำเร็จ",ex:"She accomplished all her goals.",exth:"เธอบรรลุเป้าหมายทั้งหมด",lv:"ม.5",cat:"คำศัพท์ทั่วไป"},
-  {en:"Competent",ph:"/ˈkɒm.pɪ.tənt/",th:"มีความสามารถ / เชี่ยวชาญ",ex:"A competent officer handles problems well.",exth:"เจ้าหน้าที่ที่มีความสามารถจัดการปัญหาได้ดี",lv:"ม.6",cat:"คำศัพท์ทั่วไป"},
-  {en:"Transparent",ph:"/trænsˈpær.ənt/",th:"โปร่งใส / ชัดเจน",ex:"The government should be transparent.",exth:"รัฐบาลควรมีความโปร่งใส",lv:"ม.6",cat:"คำศัพท์ทั่วไป"},
-  {en:"Integrity",ph:"/ɪnˈteɡ.rɪ.ti/",th:"ความซื่อสัตย์ / ความมีคุณธรรม",ex:"Public officers must have integrity.",exth:"ข้าราชการต้องมีความซื่อสัตย์",lv:"ม.6",cat:"คำศัพท์ทั่วไป"},
-  {en:"Authority",ph:"/ɔːˈθɒr.ɪ.ti/",th:"อำนาจ / หน่วยงานที่มีอำนาจ",ex:"The authority approved the new law.",exth:"หน่วยงานอนุมัติกฎหมายใหม่",lv:"ม.6",cat:"คำศัพท์ทั่วไป"},
-  {en:"Regulation",ph:"/ˌreɡ.jʊˈleɪ.ʃən/",th:"กฎระเบียบ / ข้อบังคับ",ex:"All staff must follow the regulations.",exth:"พนักงานทุกคนต้องปฏิบัติตามกฎระเบียบ",lv:"ม.6",cat:"คำศัพท์ทั่วไป"},
-  {en:"Petition",ph:"/pəˈtɪʃ.ən/",th:"คำร้อง / ยื่นคำร้อง",ex:"Citizens signed a petition for change.",exth:"ประชาชนเซ็นคำร้องเรียกร้องการเปลี่ยนแปลง",lv:"ม.6",cat:"คำศัพท์ทั่วไป"},
-  {en:"Emphasize",ph:"/ˈem.fə.saɪz/",th:"เน้น / ให้ความสำคัญ",ex:"The teacher emphasized the key points.",exth:"ครูเน้นย้ำประเด็นสำคัญ",lv:"ม.5",cat:"คำศัพท์ทั่วไป"},
-  {en:"Hesitate",ph:"/ˈhez.ɪ.teɪt/",th:"ลังเล / ชักช้า",ex:"Don't hesitate to ask for help.",exth:"อย่าลังเลที่จะขอความช่วยเหลือ",lv:"ม.4",cat:"คำศัพท์ทั่วไป"},
-  {en:"Acknowledge",ph:"/əkˈnɒl.ɪdʒ/",th:"ยอมรับ / รับทราบ",ex:"She acknowledged her mistake.",exth:"เธอยอมรับความผิดพลาดของตัวเอง",lv:"ม.5",cat:"คำศัพท์ทั่วไป"},
-  {en:"Discipline",ph:"/ˈdɪs.ɪ.plɪn/",th:"วินัย / ระเบียบวินัย",ex:"Discipline is key to success.",exth:"วินัยคือกุญแจสู่ความสำเร็จ",lv:"ม.3",cat:"คำศัพท์ทั่วไป"},
-  {en:"Prioritize",ph:"/praɪˈɒr.ɪ.taɪz/",th:"จัดลำดับความสำคัญ",ex:"Prioritize your most important tasks first.",exth:"จัดลำดับงานสำคัญที่สุดก่อน",lv:"ม.6",cat:"คำศัพท์ทั่วไป"},
-  {en:"Prejudice",ph:"/ˈpredʒ.ʊ.dɪs/",th:"อคติ / ความลำเอียง",ex:"We should act without prejudice.",exth:"เราควรปฏิบัติโดยปราศจากอคติ",lv:"ม.6",cat:"คำศัพท์ทั่วไป"},
-  {en:"Citizen",ph:"/ˈsɪt.ɪ.zən/",th:"พลเมือง / ประชาชน",ex:"Every citizen has rights and duties.",exth:"พลเมืองทุกคนมีสิทธิและหน้าที่",lv:"ม.4",cat:"คำศัพท์ทั่วไป"},
-  {en:"Welfare",ph:"/ˈwel.feər/",th:"สวัสดิภาพ / ความเป็นอยู่ที่ดี",ex:"The government cares about public welfare.",exth:"รัฐบาลดูแลสวัสดิภาพของประชาชน",lv:"ม.5",cat:"คำศัพท์ทั่วไป"},
+let ALL = [];
 
-  // ── Phrasal Verbs ──
-  {en:"give up",ph:"",th:"ยอมแพ้ / เลิกทำ",ex:"Don't give up — keep trying!",exth:"อย่ายอมแพ้ ฝึกต่อไป!",lv:"ม.3",cat:"Phrasal Verbs"},
-  {en:"look up",ph:"",th:"ค้นหาข้อมูล / เปิดดู",ex:"Look up the word in a dictionary.",exth:"ค้นหาคำในพจนานุกรม",lv:"ม.2",cat:"Phrasal Verbs"},
-  {en:"run out of",ph:"",th:"หมด / สิ้นสุด",ex:"We ran out of time before the exam ended.",exth:"เวลาหมดก่อนที่การสอบจะสิ้นสุด",lv:"ม.3",cat:"Phrasal Verbs"},
-  {en:"put off",ph:"",th:"เลื่อน / ผัดผ่อน",ex:"She put off doing her homework until late.",exth:"เธอผัดผ่อนการทำการบ้านไปจนดึก",lv:"ม.4",cat:"Phrasal Verbs"},
-  {en:"get along with",ph:"",th:"เข้ากันได้กับ / สนิทกับ",ex:"He gets along with all his classmates.",exth:"เขาเข้ากันได้กับเพื่อนร่วมชั้นทุกคน",lv:"ม.3",cat:"Phrasal Verbs"},
-  {en:"figure out",ph:"",th:"คิดออก / หาทางแก้",ex:"I can't figure out how to solve this problem.",exth:"ฉันคิดไม่ออกว่าจะแก้ปัญหานี้อย่างไร",lv:"ม.4",cat:"Phrasal Verbs"},
-  {en:"carry out",ph:"",th:"ดำเนินการ / ลงมือทำ",ex:"The team carried out the plan successfully.",exth:"ทีมงานดำเนินแผนได้สำเร็จ",lv:"ม.5",cat:"Phrasal Verbs"},
-  {en:"take over",ph:"",th:"เข้าควบคุม / รับช่วงต่อ",ex:"She took over the project from her colleague.",exth:"เธอรับช่วงต่อโปรเจกต์จากเพื่อนร่วมงาน",lv:"ม.5",cat:"Phrasal Verbs"},
-  {en:"point out",ph:"",th:"ชี้ให้เห็น / บ่งชี้",ex:"He pointed out the mistakes in my essay.",exth:"เขาชี้ให้เห็นข้อผิดพลาดในเรียงความของฉัน",lv:"ม.4",cat:"Phrasal Verbs"},
-  {en:"make up",ph:"",th:"แต่งขึ้น / คืนดีกัน / ชดเชย",ex:"They made up after the argument.",exth:"พวกเขาคืนดีกันหลังจากโต้เถียง",lv:"ม.3",cat:"Phrasal Verbs"},
-  {en:"break down",ph:"",th:"เสีย / พังทลาย / สลายตัว",ex:"My car broke down on the highway.",exth:"รถของฉันเสียบนทางด่วน",lv:"ม.3",cat:"Phrasal Verbs"},
-  {en:"call off",ph:"",th:"ยกเลิก",ex:"They called off the meeting due to bad weather.",exth:"พวกเขายกเลิกการประชุมเพราะอากาศไม่ดี",lv:"ม.4",cat:"Phrasal Verbs"},
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; continue; }
+    if (c === ',' && !inQ) { result.push(cur); cur = ''; continue; }
+    cur += c;
+  }
+  result.push(cur);
+  return result;
+}
 
-  // ── Idioms ──
-  {en:"hit the nail on the head",ph:"",th:"พูดถูกต้องแม่นยำ / ตรงประเด็น",ex:"You hit the nail on the head with that answer.",exth:"คุณพูดตรงประเด็นมากกับคำตอบนั้น",lv:"ม.5",cat:"Idioms"},
-  {en:"break a leg",ph:"",th:"โชคดี (ใช้ก่อนการแสดง)",ex:"Break a leg at your audition tomorrow!",exth:"โชคดีในการออดิชั่นพรุ่งนี้นะ!",lv:"ม.4",cat:"Idioms"},
-  {en:"bite the bullet",ph:"",th:"อดทนต่อสิ่งที่เจ็บปวด / ยอมรับความจริง",ex:"Just bite the bullet and tell him the truth.",exth:"อดทนซะแล้วบอกความจริงกับเขาไป",lv:"ม.5",cat:"Idioms"},
-  {en:"cost an arm and a leg",ph:"",th:"แพงมาก / ราคาสูงลิ่ว",ex:"That handbag costs an arm and a leg.",exth:"กระเป๋าใบนั้นแพงมาก",lv:"ม.4",cat:"Idioms"},
-  {en:"once in a blue moon",ph:"",th:"นานๆ ครั้ง / แทบไม่เคย",ex:"She only calls me once in a blue moon.",exth:"เธอโทรหาฉันนานๆ ครั้ง",lv:"ม.4",cat:"Idioms"},
-  {en:"under the weather",ph:"",th:"ไม่สบาย / รู้สึกไม่ดี",ex:"I'm feeling a bit under the weather today.",exth:"วันนี้ฉันรู้สึกไม่ค่อยสบาย",lv:"ม.3",cat:"Idioms"},
-  {en:"a piece of cake",ph:"",th:"เรื่องง่ายมาก / ง่ายดาย",ex:"The math test was a piece of cake.",exth:"ข้อสอบคณิตศาสตร์นั้นง่ายมาก",lv:"ม.3",cat:"Idioms"},
-  {en:"let the cat out of the bag",ph:"",th:"เผยความลับ / บอกความลับโดยไม่ตั้งใจ",ex:"He let the cat out of the bag about the surprise party.",exth:"เขาเผยความลับเรื่องงานเลี้ยงเซอร์ไพรส์",lv:"ม.5",cat:"Idioms"},
-  {en:"it's raining cats and dogs",ph:"",th:"ฝนตกหนักมาก",ex:"We can't go out — it's raining cats and dogs!",exth:"เราออกไปไม่ได้ ฝนตกหนักมาก!",lv:"ม.3",cat:"Idioms"},
-  {en:"the ball is in your court",ph:"",th:"เป็นหน้าที่ของคุณแล้ว / ถึงคิวคุณแล้ว",ex:"I've given you all the information — the ball is in your court.",exth:"ฉันให้ข้อมูลทั้งหมดแล้ว ถึงคิวคุณแล้ว",lv:"ม.5",cat:"Idioms"},
-  {en:"hit the books",ph:"",th:"ตั้งใจเรียน / อ่านหนังสือ",ex:"I need to hit the books before the final exam.",exth:"ฉันต้องตั้งใจอ่านหนังสือก่อนสอบปลายภาค",lv:"ม.3",cat:"Idioms"},
-  {en:"spill the beans",ph:"",th:"บอกความลับ / เปิดเผยข้อมูล",ex:"Don't spill the beans about the surprise!",exth:"อย่าบอกความลับเรื่องเซอร์ไพรส์นะ!",lv:"ม.4",cat:"Idioms"},
-
-  // ── Verb Forms ──
-  {en:"begin / began / begun",ph:"",th:"เริ่มต้น",ex:"The lesson begins at eight every morning.",exth:"บทเรียนเริ่มต้นทุกเช้าแปดโมง",lv:"ม.1",cat:"Verb Forms"},
-  {en:"break / broke / broken",ph:"",th:"แตก / ทำลาย",ex:"She broke the glass by accident.",exth:"เธอทำแก้วแตกโดยไม่ตั้งใจ",lv:"ม.1",cat:"Verb Forms"},
-  {en:"bring / brought / brought",ph:"",th:"นำมา / พามา",ex:"Please bring your textbook to class.",exth:"กรุณานำหนังสือเรียนมาในชั้นเรียน",lv:"ม.1",cat:"Verb Forms"},
-  {en:"buy / bought / bought",ph:"",th:"ซื้อ",ex:"He bought a new phone yesterday.",exth:"เขาซื้อโทรศัพท์ใหม่เมื่อวานนี้",lv:"ม.1",cat:"Verb Forms"},
-  {en:"come / came / come",ph:"",th:"มา",ex:"She came to the party late.",exth:"เธอมางานปาร์ตี้สาย",lv:"ม.1",cat:"Verb Forms"},
-  {en:"do / did / done",ph:"",th:"ทำ",ex:"Have you done your homework yet?",exth:"คุณทำการบ้านเสร็จแล้วหรือยัง?",lv:"ม.1",cat:"Verb Forms"},
-  {en:"eat / ate / eaten",ph:"",th:"กิน",ex:"We ate rice for dinner last night.",exth:"เราทานข้าวเป็นอาหารเย็นเมื่อคืน",lv:"ม.1",cat:"Verb Forms"},
-  {en:"give / gave / given",ph:"",th:"ให้",ex:"She gave me a gift on my birthday.",exth:"เธอให้ของขวัญฉันในวันเกิด",lv:"ม.1",cat:"Verb Forms"},
-  {en:"go / went / gone",ph:"",th:"ไป",ex:"They went to Bangkok last week.",exth:"พวกเขาไปกรุงเทพเมื่อสัปดาห์ที่แล้ว",lv:"ม.1",cat:"Verb Forms"},
-  {en:"grow / grew / grown",ph:"",th:"เติบโต / งอก",ex:"This plant has grown very fast.",exth:"ต้นไม้นี้โตเร็วมาก",lv:"ม.2",cat:"Verb Forms"},
-  {en:"know / knew / known",ph:"",th:"รู้ / รู้จัก",ex:"I've known her since childhood.",exth:"ฉันรู้จักเธอตั้งแต่เด็ก",lv:"ม.2",cat:"Verb Forms"},
-  {en:"make / made / made",ph:"",th:"ทำ / สร้าง",ex:"She made a delicious cake for the party.",exth:"เธอทำเค้กอร่อยสำหรับงานเลี้ยง",lv:"ม.1",cat:"Verb Forms"},
-  {en:"run / ran / run",ph:"",th:"วิ่ง",ex:"He ran five kilometres this morning.",exth:"เขาวิ่งห้ากิโลเมตรเช้านี้",lv:"ม.1",cat:"Verb Forms"},
-  {en:"see / saw / seen",ph:"",th:"เห็น / มอง",ex:"Have you seen my keys anywhere?",exth:"คุณเห็นกุญแจของฉันที่ไหนบ้างไหม?",lv:"ม.1",cat:"Verb Forms"},
-  {en:"speak / spoke / spoken",ph:"",th:"พูด",ex:"She has spoken English fluently since childhood.",exth:"เธอพูดภาษาอังกฤษคล่องตั้งแต่เด็ก",lv:"ม.2",cat:"Verb Forms"},
-  {en:"take / took / taken",ph:"",th:"เอา / นำ / พา",ex:"He took the bus to school every day.",exth:"เขานั่งรถเมล์ไปโรงเรียนทุกวัน",lv:"ม.1",cat:"Verb Forms"},
-  {en:"think / thought / thought",ph:"",th:"คิด",ex:"I thought about it all night.",exth:"ฉันคิดถึงมันตลอดทั้งคืน",lv:"ม.2",cat:"Verb Forms"},
-  {en:"write / wrote / written",ph:"",th:"เขียน",ex:"He has written three books so far.",exth:"เขาเขียนหนังสือมาแล้วสามเล่ม",lv:"ม.2",cat:"Verb Forms"},
-  {en:"choose / chose / chosen",ph:"",th:"เลือก",ex:"She chose the blue dress for the event.",exth:"เธอเลือกชุดสีฟ้าสำหรับงาน",lv:"ม.2",cat:"Verb Forms"},
-  {en:"drive / drove / driven",ph:"",th:"ขับ (รถ)",ex:"He has driven to Chiang Mai twice.",exth:"เขาขับรถไปเชียงใหม่มาแล้วสองครั้ง",lv:"ม.3",cat:"Verb Forms"},
-];
+async function loadVocabCSV() {
+  try {
+    const res = await fetch('vocab.csv');
+    const text = await res.text();
+    const lines = text.trim().split('\n');
+    ALL = lines.slice(1).map(line => {
+      const [en, ph, th, ex, exth, lv, cat] = parseCSVLine(line);
+      return { en: en.trim(), ph: ph.trim(), th: th.trim(), ex: ex.trim(), exth: exth.trim(), lv: lv.trim(), cat: cat.trim() };
+    }).filter(w => w.en);
+  } catch (e) {
+    console.error('โหลด vocab.csv ไม่สำเร็จ', e);
+    ALL = [];
+  }
+}
 
 // ── Firebase config (โหลดจาก firebase-config.js ที่ gitignore อยู่) ──
 const FIREBASE_CFG = (typeof window !== 'undefined' && window.FIREBASE_CFG) ? window.FIREBASE_CFG : {};
@@ -1425,9 +1371,12 @@ function publishAndRemove(i) {
 }
 
 // ── init ──
-initFirebase();
-buildCats();
-restart();
+(async () => {
+  await loadVocabCSV();
+  initFirebase();
+  buildCats();
+  restart();
+})();
 </script>
 </body>
 </html>
