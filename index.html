@@ -66,7 +66,14 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg3)}
 .swipe-label{position:absolute;top:50%;transform:translateY(-50%);font-size:18px;font-weight:700;padding:8px 14px;border-radius:var(--r);opacity:0;pointer-events:none;z-index:5;white-space:nowrap;border-width:2px;border-style:solid}
 .swipe-know{right:12px;color:var(--tx-ok);border-color:var(--tx-ok);background:var(--bg-ok)}
 .swipe-dontknow{left:12px;color:var(--tx-err);border-color:var(--tx-err);background:var(--bg-err)}
-.swipe-skip{top:10px;bottom:auto;left:50%;transform:translateX(-50%);font-size:14px;color:var(--tx2);border-color:var(--bd);background:var(--bg2)}
+/* hist */
+.hist-session{background:var(--bg2);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:6px;border:.5px solid var(--bd2)}
+.hist-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hist-date{font-size:11px;color:var(--tx3);flex:1}
+.hist-badge{font-size:11px;color:var(--tx-info);background:var(--bg-info);padding:2px 8px;border-radius:99px;border:.5px solid var(--bd-info);white-space:nowrap}
+.hist-score{font-size:13px;color:var(--tx)}
+.hist-words{font-size:12px;color:var(--tx2);line-height:1.7;word-break:break-word}
+.hist-ok{color:var(--tx-ok);font-weight:500} .hist-err{color:var(--tx-err);font-weight:500}
 
 /* swipe hint bar (mobile) */
 .swipe-hint{display:none;align-items:center;justify-content:center;gap:12px;font-size:12px;color:var(--tx3);padding:4px 0}
@@ -203,7 +210,6 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
         </div>
         <div class="swipe-label swipe-know" id="lblKnow"><i class="ti ti-check"></i> รู้แล้ว!</div>
         <div class="swipe-label swipe-dontknow" id="lblDont"><i class="ti ti-x"></i> ยังไม่รู้</div>
-        <div class="swipe-label swipe-skip" id="lblSkip">↑ ข้าม</div>
       </div>
     </div>
 
@@ -211,8 +217,6 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
       <span class="hint-l">← ยังไม่รู้</span>
       <span style="color:var(--bd)">|</span>
       <span class="hint-r">รู้แล้ว →</span>
-      <span style="color:var(--bd)">|</span>
-      <span>↑ ข้าม</span>
     </div>
 
     <button class="reveal-btn" id="revealBtn" onclick="flip()">
@@ -240,6 +244,7 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
       <div class="done-title">เสร็จแล้ว!</div>
       <div class="done-sub" id="doneSub"></div>
       <button class="done-restart" onclick="restart()"><i class="ti ti-refresh"></i> เริ่มใหม่</button>
+      <button class="done-restart" style="background:var(--bg2);color:var(--tx2);border-color:var(--bd)" onclick="openHistory()"><i class="ti ti-chart-bar"></i> ดูประวัติ</button>
     </div>
   </div>
 </div>
@@ -256,6 +261,7 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
       <button class="modal-tab" onclick="switchTab('paste')">วางข้อความ</button>
       <button class="modal-tab" onclick="switchTab('file')">ไฟล์ CSV/TXT</button>
       <button class="modal-tab" onclick="switchTab('manage')">จัดการ</button>
+      <button class="modal-tab" onclick="switchTab('history')">ประวัติ</button>
     </div>
     <div class="modal-body">
 
@@ -368,6 +374,13 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
         <button class="action-btn danger hidden" id="clear-btn" onclick="clearAllCustom()"><i class="ti ti-trash"></i> ลบทั้งหมด</button>
       </div>
 
+      <!-- Tab: History -->
+      <div class="tab-panel" id="tab-history">
+        <div class="empty-state" id="hist-empty">ยังไม่มีประวัติการทำแบบทดสอบ</div>
+        <div id="hist-list" style="display:flex;flex-direction:column;gap:10px"></div>
+        <button class="action-btn danger hidden" id="hist-clear-btn" onclick="clearHistory()"><i class="ti ti-trash"></i> ลบประวัติทั้งหมด</button>
+      </div>
+
     </div>
   </div>
 </div>
@@ -461,6 +474,7 @@ const ALL = [
 const BASE_CATS = ["ทั้งหมด","คำศัพท์ทั่วไป","Phrasal Verbs","Idioms","Verb Forms"];
 let activeCat = "ทั้งหมด";
 let deck = [], idx = 0, known = 0, notKnown = 0, flipped = false, done = false;
+let sessionKnown = [], sessionNotKnown = [];
 
 // ── custom vocab (localStorage) ──
 function loadCustom() {
@@ -542,13 +556,25 @@ function flip() {
   document.getElementById('resultRow').classList.toggle('hidden', !flipped);
 }
 
-function mark(k) { if (k) known++; else notKnown++; idx++; render(); }
+function mark(k) {
+  const w = deck[idx];
+  if (k) { known++; sessionKnown.push({en: w.en, th: w.th}); }
+  else { notKnown++; sessionNotKnown.push({en: w.en, th: w.th}); }
+  idx++; render();
+}
 function skip() { idx++; render(); }
 function go(d) { idx = Math.max(0, Math.min(deck.length - 1, idx + d)); flipped = false; render(); }
-function shuffleAll() { deck = shuffle(filtered()); idx = 0; known = 0; notKnown = 0; done = false; render(); }
+function shuffleAll() { deck = shuffle(filtered()); idx = 0; known = 0; notKnown = 0; done = false; sessionKnown = []; sessionNotKnown = []; render(); }
 
 function showDone() {
   done = true;
+  saveHistory({
+    date: new Date().toISOString(),
+    cat: activeCat,
+    total: deck.length,
+    known: [...sessionKnown],
+    notKnown: [...sessionNotKnown]
+  });
   document.getElementById('cardWrap').classList.add('hidden');
   document.getElementById('revealBtn').classList.add('hidden');
   document.getElementById('resultRow').classList.add('hidden');
@@ -562,10 +588,10 @@ function showDone() {
   document.getElementById('doneBox').classList.remove('hidden');
 }
 
-function restart() { deck = shuffle(filtered()); idx = 0; known = 0; notKnown = 0; done = false; render(); }
+function restart() { deck = shuffle(filtered()); idx = 0; known = 0; notKnown = 0; done = false; sessionKnown = []; sessionNotKnown = []; render(); }
 
 // ── swipe gestures ──
-const H_THR = 72, V_THR = 80;
+const H_THR = 72;
 let tx0 = 0, ty0 = 0, dragging = false, didMove = false;
 
 const drag = document.getElementById('cardDrag');
@@ -577,12 +603,11 @@ function resetDrag() {
   setTimeout(() => { drag.style.transition = ''; }, 260);
   document.getElementById('lblKnow').style.opacity = '0';
   document.getElementById('lblDont').style.opacity = '0';
-  document.getElementById('lblSkip').style.opacity = '0';
 }
 
 function swipeOff(dir, cb) {
-  const vw = window.innerWidth + 250, vh = window.innerHeight + 250;
-  const map = { right: `translateX(${vw}px) rotate(25deg)`, left: `translateX(-${vw}px) rotate(-25deg)`, up: `translateY(-${vh}px)` };
+  const vw = window.innerWidth + 250;
+  const map = { right: `translateX(${vw}px) rotate(25deg)`, left: `translateX(-${vw}px) rotate(-25deg)` };
   drag.style.transition = 'transform .3s ease-in, opacity .3s ease-in';
   drag.style.transform = map[dir];
   drag.style.opacity = '0';
@@ -599,7 +624,7 @@ drag.addEventListener('touchstart', e => {
 }, { passive: true });
 
 drag.addEventListener('touchmove', e => {
-  if (!dragging || done) return;
+  if (!dragging || done || !flipped) return;
   const dx = e.touches[0].clientX - tx0;
   const dy = e.touches[0].clientY - ty0;
   if (Math.hypot(dx, dy) > 6) didMove = true;
@@ -607,24 +632,17 @@ drag.addEventListener('touchmove', e => {
   const rot = dx * 0.06;
   drag.style.transform = `translateX(${dx}px) translateY(${dy}px) rotate(${rot}deg)`;
   const hRat = Math.min(Math.abs(dx) / H_THR, 1);
-  const vRat = Math.min(Math.max(-dy, 0) / V_THR, 1);
-  const horiz = Math.abs(dx) > Math.abs(dy) * 0.9;
-  document.getElementById('lblKnow').style.opacity  = horiz && dx > 0 ? hRat : 0;
-  document.getElementById('lblDont').style.opacity  = horiz && dx < 0 ? hRat : 0;
-  document.getElementById('lblSkip').style.opacity  = !horiz && dy < 0 ? vRat : 0;
+  document.getElementById('lblKnow').style.opacity = dx > 0 ? hRat : 0;
+  document.getElementById('lblDont').style.opacity = dx < 0 ? hRat : 0;
 }, { passive: false });
 
 drag.addEventListener('touchend', e => {
   if (!dragging || done) return;
   dragging = false;
   const dx = e.changedTouches[0].clientX - tx0;
-  const dy = e.changedTouches[0].clientY - ty0;
-  if (!didMove) { resetDrag(); return; }
-  const horiz = Math.abs(dx) > Math.abs(dy) * 0.9;
-  if (horiz && Math.abs(dx) >= H_THR) {
+  if (!flipped || !didMove) { resetDrag(); return; }
+  if (Math.abs(dx) >= H_THR) {
     swipeOff(dx > 0 ? 'right' : 'left', () => mark(dx > 0));
-  } else if (!horiz && dy <= -V_THR) {
-    swipeOff('up', skip);
   } else {
     resetDrag();
   }
@@ -639,17 +657,21 @@ function handleCardTap() {
 // ── import modal ──
 let pendingFile = null;
 
-function openImport()  { document.getElementById('modalBackdrop').classList.add('open'); refreshManage(); }
+function openImport()  { document.getElementById('modalBackdrop').classList.add('open'); switchTab('manual'); }
+function openHistory() { document.getElementById('modalBackdrop').classList.add('open'); switchTab('history'); }
 function closeImport() { document.getElementById('modalBackdrop').classList.remove('open'); }
 function handleBackdropClick(e) { if (e.target.id === 'modalBackdrop') closeImport(); }
 
-const TAB_IDS = ['manual','paste','file','manage'];
+const TAB_IDS = ['manual','paste','file','manage','history'];
+const TAB_TITLES = {manual:'เพิ่มคำศัพท์',paste:'เพิ่มคำศัพท์',file:'นำเข้าไฟล์',manage:'จัดการคำศัพท์',history:'ประวัติการทำแบบทดสอบ'};
 function switchTab(name) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.modal-tab').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   document.querySelectorAll('.modal-tab')[TAB_IDS.indexOf(name)].classList.add('active');
+  document.querySelector('.modal-title').textContent = TAB_TITLES[name] || 'เพิ่มคำศัพท์';
   if (name === 'manage') refreshManage();
+  if (name === 'history') refreshHistory();
 }
 
 function showMsg(id, text, ok) {
@@ -775,6 +797,49 @@ function clearAllCustom() {
   saveCustom([]);
   if (activeCat === 'คำของฉัน') activeCat = 'ทั้งหมด';
   buildCats(); refreshManage(); restart();
+}
+
+// ── history ──
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem('testHistory') || '[]'); } catch { return []; }
+}
+function saveHistory(session) {
+  const arr = loadHistory();
+  arr.unshift(session);
+  if (arr.length > 30) arr.length = 30;
+  localStorage.setItem('testHistory', JSON.stringify(arr));
+}
+function clearHistory() {
+  if (!confirm('ลบประวัติการทำแบบทดสอบทั้งหมด?')) return;
+  localStorage.removeItem('testHistory');
+  refreshHistory();
+}
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('th-TH', {day:'numeric',month:'short',year:'numeric'}) + ' · ' +
+         d.toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
+}
+function refreshHistory() {
+  const sessions = loadHistory();
+  const list = document.getElementById('hist-list');
+  const empty = document.getElementById('hist-empty');
+  const btn = document.getElementById('hist-clear-btn');
+  empty.style.display = sessions.length ? 'none' : 'block';
+  btn.classList.toggle('hidden', !sessions.length);
+  list.innerHTML = '';
+  sessions.forEach(s => {
+    const skipped = s.total - s.known.length - s.notKnown.length;
+    const knownStr = s.known.map(w => esc(w.en)).join(' · ') || '—';
+    const notKnownStr = s.notKnown.map(w => esc(w.en)).join(' · ') || '—';
+    const d = document.createElement('div');
+    d.className = 'hist-session';
+    d.innerHTML =
+      `<div class="hist-meta"><span class="hist-date">${formatDate(s.date)}</span><span class="hist-badge">${esc(s.cat)}</span></div>` +
+      `<div class="hist-score">รู้แล้ว <b style="color:var(--tx-ok)">${s.known.length}</b> · ยังไม่รู้ <b style="color:var(--tx-err)">${s.notKnown.length}</b>${skipped > 0 ? ` · ข้าม ${skipped}` : ''} <span style="color:var(--tx3)">/ ${s.total} คำ</span></div>` +
+      `<div class="hist-words"><span class="hist-ok">✓ รู้:</span> ${knownStr}</div>` +
+      `<div class="hist-words"><span class="hist-err">✗ ไม่รู้:</span> ${notKnownStr}</div>`;
+    list.appendChild(d);
+  });
 }
 
 // ── init ──
