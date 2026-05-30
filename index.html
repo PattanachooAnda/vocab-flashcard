@@ -9,6 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<!-- Firebase SDK (Realtime Database) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <style>
 :root {
   --bg: #ffffff; --bg2: #f8f9fa; --bg3: #f3f4f6;
@@ -180,6 +183,10 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
 .ci-en{font-size:14px;font-weight:500;color:var(--tx)}
 .ci-th{font-size:12px;color:var(--tx2)}
 .ci-del{width:30px;height:30px;border-radius:50%;border:none;background:var(--bg-err);color:var(--tx-err);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ci-pub{padding:0 10px;height:28px;border-radius:var(--r);border:.5px solid var(--bd-info);background:var(--bg-info);color:var(--tx-info);font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.section-lbl{font-size:12px;color:var(--tx2);font-weight:500;padding:3px 0;display:flex;align-items:center;gap:6px}
+.section-lbl::after{content:'';flex:1;height:.5px;background:var(--bd)}
+.shared-item{display:flex;align-items:center;padding:8px 12px;background:var(--bg-info);border-radius:var(--r);gap:8px;border:.5px solid var(--bd-info)}
 .empty-state{font-size:14px;color:var(--tx3);text-align:center;padding:20px 0}
 
 /* cross-nav */
@@ -418,9 +425,14 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
 
       <!-- Tab: Manage -->
       <div class="tab-panel" id="tab-manage">
-        <div class="empty-state" id="custom-empty">ยังไม่มีคำศัพท์ที่เพิ่มเอง</div>
+        <div class="section-lbl"><i class="ti ti-world" style="font-size:13px;color:var(--tx-info)"></i> คลังกลาง <span style="font-size:11px;font-weight:400;color:var(--tx3)">(ทุกคนเห็น)</span></div>
+        <div id="shared-status" style="font-size:12px;color:var(--tx3);display:none;padding:4px 0"></div>
+        <div class="empty-state" id="shared-empty" style="font-size:13px;padding:10px 0">ยังไม่มีคำในคลังกลาง</div>
+        <div class="custom-list" id="shared-list"></div>
+        <div class="section-lbl" style="margin-top:4px"><i class="ti ti-device-mobile" style="font-size:13px"></i> คำร่างของฉัน <span style="font-size:11px;font-weight:400;color:var(--tx3)">(เฉพาะเครื่องนี้)</span></div>
+        <div class="empty-state" id="custom-empty">ยังไม่มีคำที่เตรียมไว้</div>
         <div class="custom-list" id="custom-list"></div>
-        <button class="action-btn danger hidden" id="clear-btn" onclick="clearAllCustom()"><i class="ti ti-trash"></i> ลบทั้งหมด</button>
+        <button class="action-btn danger hidden" id="clear-btn" onclick="clearAllCustom()"><i class="ti ti-trash"></i> ลบคำร่างทั้งหมด</button>
       </div>
 
     </div>
@@ -556,11 +568,27 @@ const ALL = [
   {en:"drive / drove / driven",ph:"",th:"ขับ (รถ)",ex:"He has driven to Chiang Mai twice.",exth:"เขาขับรถไปเชียงใหม่มาแล้วสองครั้ง",lv:"ม.3",cat:"Verb Forms"},
 ];
 
+// ── Firebase config ──
+// 1. ไปที่ https://console.firebase.google.com → สร้างโปรเจกต์ใหม่
+// 2. Build → Realtime Database → Create database (test mode)
+// 3. Project settings → Your apps → Web → copy config มาใส่ด้านล่าง
+const FIREBASE_CFG = {
+  apiKey:            "",   // ← ใส่ค่าจาก Firebase console
+  authDomain:        "",
+  databaseURL:       "",   // ← https://your-project-default-rtdb.REGION.firebasedatabase.app
+  projectId:         "",
+  storageBucket:     "",
+  messagingSenderId: "",
+  appId:             ""
+};
+
 // ── state ──
 const BASE_CATS = ["ทั้งหมด","คำศัพท์ทั่วไป","Phrasal Verbs","Idioms","Verb Forms"];
 let activeCat = "ทั้งหมด";
 let deck = [], idx = 0, flipped = false, done = false;
 let cardStatus = []; // null | 'known' | 'notKnown'
+let sharedVocab = []; // คลังกลาง จาก Firebase (read-only ใน client)
+let firebaseDB = null;
 
 function countKnown() { return cardStatus.filter(s => s === 'known').length; }
 function countNotKnown() { return cardStatus.filter(s => s === 'notKnown').length; }
@@ -572,16 +600,39 @@ function loadCustom() {
   try { return JSON.parse(localStorage.getItem('customVocab') || '[]'); } catch { return []; }
 }
 function saveCustom(arr) { localStorage.setItem('customVocab', JSON.stringify(arr)); }
-function getAllWords() { return [...ALL, ...loadCustom()]; }
+function getAllWords() {
+  // Deduplicate: ALL → shared → local (first wins)
+  const combined = [...ALL, ...sharedVocab, ...loadCustom()];
+  const seen = new Set();
+  return combined.filter(w => {
+    const k = w.en.toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k); return true;
+  });
+}
 function filtered() {
   const all = getAllWords();
   return activeCat === 'ทั้งหมด' ? [...all] : all.filter(w => w.cat === activeCat);
 }
 function getCats() {
   const cats = [...BASE_CATS];
-  const customCats = [...new Set(loadCustom().map(w => w.cat))];
-  customCats.forEach(c => { if (!cats.includes(c)) cats.push(c); });
+  const extra = [...new Set([...sharedVocab, ...loadCustom()].map(w => w.cat))];
+  extra.forEach(c => { if (!cats.includes(c)) cats.push(c); });
   return cats;
+}
+
+// ── category selects in import forms ──
+function buildCatOptions() {
+  const cats = getCats().filter(c => c !== 'ทั้งหมด' && c !== 'คำของฉัน');
+  const html = `<option value="คำของฉัน">คำของฉัน</option>` +
+    cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  ['inp-cat','paste-cat','file-cat'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const val = el.value;
+    el.innerHTML = html;
+    if ([...el.options].some(o => o.value === val)) el.value = val;
+  });
 }
 
 // ── categories ──
@@ -600,6 +651,7 @@ function buildCats() {
     };
     c.appendChild(b);
   });
+  buildCatOptions();
 }
 
 // ── shuffle ──
@@ -938,6 +990,23 @@ function importFileData() {
 function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function refreshManage() {
+  // ── shared vocab (read from Firebase) ──
+  const sharedList = document.getElementById('shared-list');
+  const sharedEmpty = document.getElementById('shared-empty');
+  sharedList.innerHTML = '';
+  sharedEmpty.style.display = sharedVocab.length ? 'none' : 'block';
+  sharedVocab.forEach(w => {
+    const d = document.createElement('div');
+    d.className = 'shared-item';
+    d.innerHTML =
+      `<div class="custom-item-text" style="flex:1">
+         <div class="ci-en">${esc(w.en)} <span style="font-size:10px;color:var(--tx-info);margin-left:4px">${esc(w.cat||'')}</span></div>
+         <div class="ci-th">${esc(w.th)}</div>
+       </div>`;
+    sharedList.appendChild(d);
+  });
+
+  // ── local drafts ──
   const custom = loadCustom();
   const list = document.getElementById('custom-list');
   const empty = document.getElementById('custom-empty');
@@ -946,9 +1015,16 @@ function refreshManage() {
   empty.style.display = custom.length ? 'none' : 'block';
   btn.classList.toggle('hidden', !custom.length);
   custom.forEach((w, i) => {
+    const canPublish = !!firebaseDB;
     const d = document.createElement('div');
     d.className = 'custom-item';
-    d.innerHTML = `<div class="custom-item-text"><div class="ci-en">${esc(w.en)}</div><div class="ci-th">${esc(w.th)}</div></div><button class="ci-del" onclick="delCustom(${i})"><i class="ti ti-trash" style="font-size:13px"></i></button>`;
+    d.innerHTML =
+      `<div class="custom-item-text">
+         <div class="ci-en">${esc(w.en)}</div>
+         <div class="ci-th">${esc(w.th)}</div>
+       </div>
+       ${canPublish ? `<button class="ci-pub" onclick="publishAndRemove(${i})" title="เผยแพร่สู่คลังกลาง"><i class="ti ti-world-upload" style="font-size:12px"></i> เผยแพร่</button>` : ''}
+       <button class="ci-del" onclick="delCustom(${i})"><i class="ti ti-trash" style="font-size:13px"></i></button>`;
     list.appendChild(d);
   });
 }
@@ -971,6 +1047,7 @@ function loadHistory() {
 }
 function saveHistory(session) {
   const arr = loadHistory();
+  session.round = arr.length > 0 ? ((arr[0].round || arr.length) + 1) : 1;
   arr.unshift(session);
   if (arr.length > 30) arr.length = 30;
   localStorage.setItem('testHistory', JSON.stringify(arr));
@@ -1001,7 +1078,8 @@ function refreshSessions() {
   empty.style.display = sessions.length ? 'none' : 'block';
   btn.classList.toggle('hidden', !sessions.length);
   list.innerHTML = '';
-  sessions.forEach(s => {
+  sessions.forEach((s, i) => {
+    const roundNum = s.round || (sessions.length - i);
     const k = s.known.length;
     const nk = s.notKnown.length;
     const pct = s.total > 0 ? Math.round(k / s.total * 100) : 0;
@@ -1021,10 +1099,12 @@ function refreshSessions() {
         <i class="ti ti-chevron-right hist-expand-icon"></i>
         <div style="flex:1">
           <div class="hist-meta">
-            <span class="hist-date">${formatDate(s.date)}</span>
+            <span style="font-size:14px;font-weight:700;color:var(--tx)">ครั้งที่ ${roundNum}</span>
             <span class="hist-badge">${esc(s.cat)}</span>
+            ${i === 0 ? '<span style="font-size:10px;padding:2px 6px;border-radius:99px;background:var(--bg-ok);color:var(--tx-ok);border:.5px solid var(--bd-ok)">ล่าสุด</span>' : ''}
           </div>
-          <div class="hist-score">รู้ <b style="color:var(--tx-ok)">${k}</b> · ไม่รู้ <b style="color:var(--tx-err)">${nk}</b> · ${pct}% <span style="color:var(--tx3)">/ ${s.total} คำ</span></div>
+          <div class="hist-date" style="margin-top:2px">${formatDate(s.date)}</div>
+          <div class="hist-score" style="margin-top:3px">รู้ <b style="color:var(--tx-ok)">${k}</b> · ไม่รู้ <b style="color:var(--tx-err)">${nk}</b> · ${pct}% <span style="color:var(--tx3)">/ ${s.total} คำ</span></div>
         </div>
       </div>
       <div class="hist-table-wrap">
@@ -1226,7 +1306,50 @@ function refreshTrend() {
   });
 }
 
+// ── Firebase ──
+function initFirebase() {
+  if (!FIREBASE_CFG.databaseURL) {
+    document.getElementById('shared-status').style.display = 'block';
+    document.getElementById('shared-status').textContent = 'ยังไม่ได้ตั้งค่า Firebase — ดู comment ในโค้ด';
+    return;
+  }
+  try {
+    firebase.initializeApp(FIREBASE_CFG);
+    firebaseDB = firebase.database();
+    // Real-time listener: ทุกคนเห็นพร้อมกันเมื่อมีการเพิ่มคำใหม่
+    firebaseDB.ref('sharedVocab').on('value', snap => {
+      sharedVocab = snap.val() ? Object.values(snap.val()) : [];
+      buildCats();
+      if (document.getElementById('tab-manage').classList.contains('active')) refreshManage();
+    });
+  } catch(e) {
+    console.warn('Firebase error:', e);
+  }
+}
+
+function publishWord(word) {
+  if (!firebaseDB) return false;
+  firebaseDB.ref('sharedVocab').push({
+    en: word.en, th: word.th, ph: word.ph||'',
+    ex: word.ex||'', exth: word.exth||'', lv: word.lv||'ม.1', cat: word.cat||'คำของฉัน',
+    _addedAt: Date.now()
+  });
+  return true;
+}
+
+function publishAndRemove(i) {
+  const arr = loadCustom();
+  const word = arr[i];
+  if (!publishWord(word)) {
+    alert('กรุณาตั้งค่า Firebase ก่อนเผยแพร่ (ดู comment ในโค้ด)'); return;
+  }
+  arr.splice(i, 1);
+  saveCustom(arr);
+  buildCats(); refreshManage();
+}
+
 // ── init ──
+initFirebase();
 buildCats();
 restart();
 </script>
