@@ -20,7 +20,9 @@
       "Bash(powershell -Command \"Start-Process \\(Get-Item 'd:\\\\Code\\\\vocab-flashcard\\\\index.html'\\).FullName; Write-Host 'Opening in browser...'; Start-Sleep -Seconds 2\")",
       "Bash(node -e ' *)",
       "Bash(git commit -m 'Add category-based filtering to history views *)",
-      "PowerShell(New-Item -ItemType Directory -Force \"d:\\\\Code\\\\vocab-flashcard\\\\.github\\\\workflows\")"
+      "PowerShell(New-Item -ItemType Directory -Force \"d:\\\\Code\\\\vocab-flashcard\\\\.github\\\\workflows\")",
+      "Bash(gh run *)",
+      "WebFetch(domain:pattanachooanda.github.io)"
     ],
     "deny": []
   },
