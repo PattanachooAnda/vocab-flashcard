@@ -58,6 +58,7 @@ jobs:
           head -1 dist/firebase-config.js
           echo "--- files in dist/ ---"
           ls dist/
+          echo "<!-- DIST_BUILD_OK -->" >> dist/index.html
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
