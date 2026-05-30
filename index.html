@@ -364,15 +364,30 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
             </select>
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">หมวดหมู่</label>
-          <select class="form-input" id="inp-cat">
-            <option value="คำของฉัน">คำของฉัน</option>
-            <option value="คำศัพท์ทั่วไป">คำศัพท์ทั่วไป</option>
-            <option value="Phrasal Verbs">Phrasal Verbs</option>
-            <option value="Idioms">Idioms</option>
-            <option value="Verb Forms">Verb Forms</option>
-          </select>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">ประเภทคำ <span style="font-weight:400;color:var(--tx3)">(ไม่บังคับ)</span></label>
+            <select class="form-input" id="inp-wt">
+              <option value="">— ไม่ระบุ —</option>
+              <option value="n.">n. (คำนาม)</option>
+              <option value="v.">v. (คำกริยา)</option>
+              <option value="adj.">adj. (คำคุณศัพท์)</option>
+              <option value="adv.">adv. (คำวิเศษณ์)</option>
+              <option value="phrasal v.">phrasal v. (Phrasal Verb)</option>
+              <option value="phrase">phrase (สำนวน/Idiom)</option>
+              <option value="irreg. v.">irreg. v. (กริยาไม่สม่ำเสมอ)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">หมวดหมู่</label>
+            <select class="form-input" id="inp-cat">
+              <option value="คำของฉัน">คำของฉัน</option>
+              <option value="คำศัพท์ทั่วไป">คำศัพท์ทั่วไป</option>
+              <option value="Phrasal Verbs">Phrasal Verbs</option>
+              <option value="Idioms">Idioms</option>
+              <option value="Verb Forms">Verb Forms</option>
+            </select>
+          </div>
         </div>
         <div class="form-group">
           <label class="form-label">ประโยคตัวอย่าง (English) <span style="font-weight:400;color:var(--tx3)">(ไม่บังคับ)</span></label>
@@ -393,12 +408,12 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
           <b>แบบย่อ</b> (ได้แค่คำ + คำแปล) เลือกรูปแบบใดก็ได้:<br>
           <code>Absent - ขาด / ไม่อยู่</code> &nbsp;คั่นด้วย <b> - </b><br>
           <code>Polite, สุภาพ</code> &nbsp;คั่นด้วย <b>,</b><br><br>
-          <b>แบบเต็ม</b> (ครบทุกคุณสมบัติ) — คั่นด้วย <b>,</b> ครบ 6 ช่อง โดยช่องสุดท้ายต้องเป็น ม.1–ม.6:<br>
-          <code style="font-size:11px">คำอังกฤษ, คำแปลไทย, การออกเสียง, ประโยค Eng, ประโยคไทย, ระดับ</code><br>
+          <b>แบบเต็ม</b> (ครบทุกคุณสมบัติ) — คั่นด้วย <b>,</b> ช่องที่ 6 ต้องเป็น ม.1–ม.6:<br>
+          <code style="font-size:11px">คำอังกฤษ, คำแปลไทย, การออกเสียง, ประโยค Eng, ประโยคไทย, ระดับ, ประเภทคำ</code><br>
           ตัวอย่าง:<br>
-          <code style="font-size:11px">Grateful, รู้สึกขอบคุณ, /ˈɡreɪt.fəl/, I am grateful for your help., ฉันขอบคุณสำหรับความช่วยเหลือ, ม.3</code><br>
-          ถ้าไม่มีการออกเสียงหรือประโยค เว้นว่างช่องนั้นได้:<br>
-          <code style="font-size:11px">give up, ยอมแพ้, , Don't give up!, อย่ายอมแพ้!, ม.3</code><br><br>
+          <code style="font-size:11px">Grateful, รู้สึกขอบคุณ, /ˈɡreɪt.fəl/, I am grateful for your help., ฉันขอบคุณสำหรับความช่วยเหลือ, ม.3, adj.</code><br>
+          ถ้าไม่มีบางช่อง เว้นว่างได้:<br>
+          <code style="font-size:11px">give up, ยอมแพ้, , Don't give up!, อย่ายอมแพ้!, ม.3, phrasal v.</code><br><br>
           <span style="color:var(--tx3);font-size:12px">หมวดหมู่ใช้จาก dropdown ด้านล่าง</span>
         </div>
         <div class="form-group">
@@ -436,8 +451,9 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
           &nbsp;<b>4. ประโยคตัวอย่าง (Eng)</b> — (เว้นว่างได้)<br>
           &nbsp;<b>5. แปลประโยค (ไทย)</b> — (เว้นว่างได้)<br>
           &nbsp;<b>6. ระดับชั้น</b> — ม.1–ม.6 (เว้นว่าง = ม.1)<br>
+          &nbsp;<b>7. ประเภทคำ</b> — n. / v. / adj. / adv. / phrasal v. / phrase / irreg. v. (เว้นว่างได้)<br>
           ตัวอย่างบรรทัด:<br>
-          <code style="font-size:11px">Grateful,รู้สึกขอบคุณ,/ˈɡreɪt.fəl/,I am grateful for your help.,ฉันขอบคุณสำหรับความช่วยเหลือ,ม.3</code><br>
+          <code style="font-size:11px">Grateful,รู้สึกขอบคุณ,/ˈɡreɪt.fəl/,I am grateful for your help.,ฉันขอบคุณสำหรับความช่วยเหลือ,ม.3,adj.</code><br>
           <span style="color:var(--tx3);font-size:12px">หมวดหมู่ใช้จาก dropdown ด้านล่าง (ไม่มีคอลัมน์ cat ใน CSV)</span>
         </div>
         <div class="form-group">
@@ -558,8 +574,8 @@ async function loadVocabCSV() {
     const text = await res.text();
     const lines = text.trim().split('\n');
     ALL = lines.slice(1).map(line => {
-      const [en, ph, th, ex, exth, lv, cat] = parseCSVLine(line);
-      return { en: en.trim(), ph: ph.trim(), th: th.trim(), ex: ex.trim(), exth: exth.trim(), lv: lv.trim(), cat: cat.trim() };
+      const [en, ph, th, ex, exth, lv, cat, wt] = parseCSVLine(line);
+      return { en: en.trim(), ph: ph.trim(), th: th.trim(), ex: ex.trim(), exth: exth.trim(), lv: lv.trim(), cat: cat.trim(), wt: (wt||'').trim() };
     }).filter(w => w.en);
   } catch (e) {
     console.error('โหลด vocab.csv ไม่สำเร็จ', e);
@@ -666,7 +682,7 @@ function render() {
   const w = deck[idx];
   document.getElementById('cEn').textContent = w.en;
   document.getElementById('cPh').textContent = w.ph || '';
-  document.getElementById('cLv').textContent = (w.lv || '') + (w.lv && w.cat ? ' · ' : '') + (w.cat || '');
+  document.getElementById('cLv').textContent = [w.wt, w.lv, w.cat].filter(Boolean).join(' · ');
   document.getElementById('cTh').textContent = w.th;
   document.getElementById('cEx').textContent = w.ex ? '"' + w.ex + '"' : '';
   document.getElementById('cExTh').textContent = w.exth || '';
@@ -908,11 +924,12 @@ function addManual() {
   if (!en || !th) { showMsg('manual-msg', 'กรุณากรอกคำอังกฤษและคำแปล', false); return; }
   const w = {
     en, th,
-    ph: document.getElementById('inp-ph').value.trim(),
-    ex: document.getElementById('inp-ex').value.trim(),
-    exth: document.getElementById('inp-exth').value.trim(),
-    lv: document.getElementById('inp-lv').value,
-    cat: document.getElementById('inp-cat').value
+    ph:  document.getElementById('inp-ph').value.trim(),
+    ex:  document.getElementById('inp-ex').value.trim(),
+    exth:document.getElementById('inp-exth').value.trim(),
+    lv:  document.getElementById('inp-lv').value,
+    cat: document.getElementById('inp-cat').value,
+    wt:  document.getElementById('inp-wt').value
   };
   const arr = loadCustom(); arr.push(w); saveCustom(arr);
   ['inp-en','inp-th','inp-ph','inp-ex','inp-exth'].forEach(id => document.getElementById(id).value = '');
@@ -925,16 +942,17 @@ function parseText(text, cat = 'คำของฉัน') {
   return text.split('\n').map(l => l.trim()).filter(Boolean).reduce((acc, line) => {
     let en, th, ph = '', ex = '', exth = '', lv = 'ม.1';
     const parts = parseCSVLine(line).map(s => s.trim());
+    let wt = '';
     if (parts.length >= 6 && ALLOWED_LV.includes(parts[5])) {
-      // full format: en, th, ph, ex, exth, lv  (ตรวจจาก field 6 เป็น ม.x)
-      [en, th, ph, ex, exth, lv] = parts;
+      // full format: en, th, ph, ex, exth, lv[, wt]  (ตรวจจาก field 6 เป็น ม.x)
+      [en, th, ph, ex, exth, lv] = parts; wt = parts[6] || '';
     } else if (/\s+-\s+/.test(line)) {
       [en, th] = line.split(/\s+-\s+/);
     } else {
       en = parts[0]; th = parts.slice(1).join(',');
     }
     en = en?.trim(); th = th?.trim();
-    if (en && th) acc.push({ en, th, ph: ph||'', ex: ex||'', exth: exth||'', lv: ALLOWED_LV.includes(lv) ? lv : 'ม.1', cat });
+    if (en && th) acc.push({ en, th, ph: ph||'', ex: ex||'', exth: exth||'', lv: ALLOWED_LV.includes(lv) ? lv : 'ม.1', wt: wt||'', cat });
     return acc;
   }, []);
 }
@@ -961,9 +979,9 @@ function importPaste() {
 // file tab
 function parseCSV(text, cat = 'คำของฉัน') {
   return text.split('\n').map(l => l.trim()).filter(Boolean).reduce((acc, line) => {
-    const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g,''));
+    const cols = parseCSVLine(line).map(c => c.trim());
     if (cols.length >= 2 && cols[0] && cols[1])
-      acc.push({ en:cols[0], th:cols[1], ph:cols[2]||'', ex:cols[3]||'', exth:cols[4]||'', lv:cols[5]||'ม.1', cat });
+      acc.push({ en:cols[0], th:cols[1], ph:cols[2]||'', ex:cols[3]||'', exth:cols[4]||'', lv:cols[5]||'ม.1', wt:cols[6]||'', cat });
     return acc;
   }, []);
 }
@@ -1402,6 +1420,7 @@ function publishWord(word) {
     exth: sanitizeField(word.exth, 400),
     lv:   ALLOWED_LV.includes(word.lv) ? word.lv : 'ม.1',
     cat:  sanitizeField(word.cat,  50) || 'คำของฉัน',
+    wt:   sanitizeField(word.wt,   30),
     _addedAt: Date.now()
   });
   return true;
