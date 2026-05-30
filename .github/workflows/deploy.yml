@@ -25,29 +25,37 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # สร้าง firebase-config.js จาก GitHub Secrets (ไม่ถูก commit ลง repo)
+      # Inject Firebase config จาก GitHub Secrets ลงใน index.html โดยตรง (ไม่ต้องพึ่งไฟล์แยก)
       - name: Inject Firebase config from secrets
         env:
-          FIREBASE_API_KEY:            ${{ secrets.FIREBASE_API_KEY }}
-          FIREBASE_AUTH_DOMAIN:        ${{ secrets.FIREBASE_AUTH_DOMAIN }}
-          FIREBASE_DATABASE_URL:       ${{ secrets.FIREBASE_DATABASE_URL }}
-          FIREBASE_PROJECT_ID:         ${{ secrets.FIREBASE_PROJECT_ID }}
-          FIREBASE_STORAGE_BUCKET:     ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_API_KEY:             ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_AUTH_DOMAIN:         ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+          FIREBASE_DATABASE_URL:        ${{ secrets.FIREBASE_DATABASE_URL }}
+          FIREBASE_PROJECT_ID:          ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_STORAGE_BUCKET:      ${{ secrets.FIREBASE_STORAGE_BUCKET }}
           FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
-          FIREBASE_APP_ID:             ${{ secrets.FIREBASE_APP_ID }}
+          FIREBASE_APP_ID:              ${{ secrets.FIREBASE_APP_ID }}
         run: |
-          cat > firebase-config.js << ENDOFFILE
-          window.FIREBASE_CFG = {
-            apiKey:            "${FIREBASE_API_KEY}",
-            authDomain:        "${FIREBASE_AUTH_DOMAIN}",
-            databaseURL:       "${FIREBASE_DATABASE_URL}",
-            projectId:         "${FIREBASE_PROJECT_ID}",
-            storageBucket:     "${FIREBASE_STORAGE_BUCKET}",
-            messagingSenderId: "${FIREBASE_MESSAGING_SENDER_ID}",
-            appId:             "${FIREBASE_APP_ID}"
-          };
-          ENDOFFILE
-          echo "firebase-config.js created"
+          python3 << 'EOF'
+          import os
+          cfg = (
+            "<script>window.FIREBASE_CFG={"
+            f"apiKey:\"{os.environ['FIREBASE_API_KEY']}\","
+            f"authDomain:\"{os.environ['FIREBASE_AUTH_DOMAIN']}\","
+            f"databaseURL:\"{os.environ['FIREBASE_DATABASE_URL']}\","
+            f"projectId:\"{os.environ['FIREBASE_PROJECT_ID']}\","
+            f"storageBucket:\"{os.environ['FIREBASE_STORAGE_BUCKET']}\","
+            f"messagingSenderId:\"{os.environ['FIREBASE_MESSAGING_SENDER_ID']}\","
+            f"appId:\"{os.environ['FIREBASE_APP_ID']}\""
+            "};</script>"
+          )
+          with open('index.html', 'r', encoding='utf-8') as f:
+              content = f.read()
+          content = content.replace('<!-- __FIREBASE_CONFIG__ -->', cfg)
+          with open('index.html', 'w', encoding='utf-8') as f:
+              f.write(content)
+          print("Firebase config injected into index.html")
+          EOF
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -55,7 +63,7 @@ jobs:
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'           # อัพโหลดทั้ง folder รวม firebase-config.js ที่เพิ่งสร้าง
+          path: '.'
 
       - name: Deploy to GitHub Pages
         id: deployment
