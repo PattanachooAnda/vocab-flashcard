@@ -182,6 +182,11 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
 .ci-del{width:30px;height:30px;border-radius:50%;border:none;background:var(--bg-err);color:var(--tx-err);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .empty-state{font-size:14px;color:var(--tx3);text-align:center;padding:20px 0}
 
+/* cross-nav */
+.nav-link{font-size:11px;color:var(--tx-info);cursor:pointer;background:none;border:none;padding:0;font-family:'Sarabun',sans-serif;text-decoration:underline;text-underline-offset:2px;flex-shrink:0;line-height:1}
+.word-cat-chip{font-size:10px;padding:2px 7px;border-radius:99px;background:var(--bg-info);color:var(--tx-info);border:.5px solid var(--bd-info);cursor:pointer;white-space:nowrap;font-family:'Sarabun',sans-serif;line-height:1.4}
+.word-stat-item.focused{outline:2px solid var(--tx-info);outline-offset:3px}
+
 /* utils */
 .hidden{display:none!important}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
@@ -429,10 +434,10 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
       <div class="modal-title">ประวัติการทำแบบทดสอบ</div>
       <button class="modal-close" onclick="closeHistoryModal()"><i class="ti ti-x" style="font-size:14px"></i></button>
     </div>
-    <div id="histCatContainer" style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;padding:10px 20px 0;border-bottom:.5px solid var(--bd2)"></div>
     <div class="modal-tabs">
       <button class="modal-tab active" onclick="switchHistTab('sessions')">รายรอบ</button>
       <button class="modal-tab" onclick="switchHistTab('perword')">รายคำ</button>
+      <button class="modal-tab" onclick="switchHistTab('bycat')">หมวดหมู่</button>
       <button class="modal-tab" onclick="switchHistTab('trend')">แนวโน้ม</button>
     </div>
     <div class="modal-body">
@@ -448,6 +453,12 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
       <div class="tab-panel" id="histtab-perword">
         <div class="empty-state" id="perword-empty">ยังไม่มีข้อมูล</div>
         <div id="perword-list" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
+      <!-- Sub-tab: By Category -->
+      <div class="tab-panel" id="histtab-bycat">
+        <div class="empty-state" id="bycat-empty">ยังไม่มีข้อมูล</div>
+        <div id="bycat-list" style="display:flex;flex-direction:column;gap:10px"></div>
       </div>
 
       <!-- Sub-tab: Trend -->
@@ -789,39 +800,24 @@ function openImport()  { document.getElementById('modalBackdrop').classList.add(
 function closeImport() { document.getElementById('modalBackdrop').classList.remove('open'); }
 function handleBackdropClick(e) { if (e.target.id === 'modalBackdrop') closeImport(); }
 
-let histCategoryFilter = 'ทั้งหมด';
 function openHistoryModal() {
   document.getElementById('histModalBackdrop').classList.add('open');
-  buildHistCategories();
   switchHistTab('sessions');
 }
 function closeHistoryModal() { document.getElementById('histModalBackdrop').classList.remove('open'); }
 function handleHistBackdropClick(e) { if (e.target.id === 'histModalBackdrop') closeHistoryModal(); }
 
-const HIST_TAB_IDS = ['sessions','perword','trend'];
-function buildHistCategories() {
-  const container = document.getElementById('histCatContainer');
-  container.innerHTML = '';
-  const sessions = loadHistory();
-  const sessionCats = [...new Set(sessions.map(s => s.cat))];
-  const catsToShow = BASE_CATS.filter(c => sessionCats.includes(c) || c === 'ทั้งหมด');
-  catsToShow.forEach(cat => {
-    const b = document.createElement('button');
-    b.className = 'cat-btn' + (cat === histCategoryFilter ? ' active' : '');
-    b.textContent = cat;
-    b.style.fontSize = '12px';
-    b.style.padding = '5px 12px';
-    b.onclick = () => {
-      histCategoryFilter = cat;
-      buildHistCategories();
-      const currentTab = document.querySelector('#histModalBackdrop .modal-tab.active').textContent.toLowerCase();
-      if (currentTab.includes('รายรอบ')) refreshSessions();
-      else if (currentTab.includes('รายคำ')) refreshPerWord();
-      else if (currentTab.includes('แนวโน้ม')) refreshTrend();
-    };
-    container.appendChild(b);
-  });
+// Cross-tab navigation state: y = f(x) — คลิก x ในมุมมองหนึ่งไปดู y อีกมุมมอง
+let histFocusWord = null;
+let histFocusCat = null;
+
+function navToHistTab(tab, opts) {
+  histFocusWord = (opts && opts.word) || null;
+  histFocusCat  = (opts && opts.cat)  || null;
+  switchHistTab(tab);
 }
+
+const HIST_TAB_IDS = ['sessions','perword','bycat','trend'];
 function switchHistTab(name) {
   document.querySelectorAll('#histModalBackdrop .tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('#histModalBackdrop .modal-tab').forEach(b => b.classList.remove('active'));
@@ -829,6 +825,7 @@ function switchHistTab(name) {
   document.querySelectorAll('#histModalBackdrop .modal-tab')[HIST_TAB_IDS.indexOf(name)].classList.add('active');
   if (name === 'sessions') refreshSessions();
   if (name === 'perword')  refreshPerWord();
+  if (name === 'bycat')    refreshByCategory();
   if (name === 'trend')    refreshTrend();
 }
 
@@ -997,13 +994,12 @@ function toggleSession(headerEl) {
   headerEl.closest('.hist-session').classList.toggle('expanded');
 }
 function refreshSessions() {
-  const allSessions = loadHistory();
-  const sessions = histCategoryFilter === 'ทั้งหมด' ? allSessions : allSessions.filter(s => s.cat === histCategoryFilter);
+  const sessions = loadHistory();
   const list = document.getElementById('hist2-list');
   const empty = document.getElementById('hist2-empty');
   const btn = document.getElementById('hist2-clear-btn');
   empty.style.display = sessions.length ? 'none' : 'block';
-  btn.classList.toggle('hidden', !allSessions.length);
+  btn.classList.toggle('hidden', !sessions.length);
   list.innerHTML = '';
   sessions.forEach(s => {
     const k = s.known.length;
@@ -1013,9 +1009,11 @@ function refreshSessions() {
       ...s.known.map(w => ({...w, status:'known'})),
       ...s.notKnown.map(w => ({...w, status:'notKnown'}))
     ];
-    const rows = allWords.map(w =>
-      `<tr><td>${esc(w.en)}</td><td>${esc(w.th)}</td><td class="td-status-${w.status}">${w.status === 'known' ? '✓ รู้' : '✗ ไม่รู้'}</td></tr>`
-    ).join('');
+    const rows = allWords.map(w => {
+      const catWord = getAllWords().find(v => v.en.toLowerCase() === w.en.toLowerCase());
+      const catStr = catWord ? `<span style="font-size:10px;color:var(--tx3);margin-left:4px">${esc(catWord.cat)}</span>` : '';
+      return `<tr><td>${esc(w.en)}${catStr}</td><td>${esc(w.th)}</td><td class="td-status-${w.status}">${w.status === 'known' ? '✓ รู้' : '✗ ไม่รู้'}</td></tr>`;
+    }).join('');
     const d = document.createElement('div');
     d.className = 'hist-session';
     d.innerHTML =
@@ -1039,25 +1037,24 @@ function refreshSessions() {
   });
 }
 function refreshPerWord() {
-  const allSessions = loadHistory();
-  const sessions = histCategoryFilter === 'ทั้งหมด' ? allSessions : allSessions.filter(s => s.cat === histCategoryFilter);
+  const sessions = loadHistory();
   const empty = document.getElementById('perword-empty');
   const list = document.getElementById('perword-list');
   list.innerHTML = '';
   if (!sessions.length) { empty.style.display = 'block'; return; }
   empty.style.display = 'none';
   const map = new Map();
+  const addWord = (w, result) => {
+    const key = w.en.toLowerCase();
+    if (!map.has(key)) {
+      const catWord = getAllWords().find(v => v.en.toLowerCase() === key);
+      map.set(key, {en: w.en, th: w.th, cat: catWord ? catWord.cat : null, known: 0, notKnown: 0});
+    }
+    map.get(key)[result]++;
+  };
   sessions.forEach(s => {
-    s.known.forEach(w => {
-      const key = w.en.toLowerCase();
-      if (!map.has(key)) map.set(key, {en: w.en, th: w.th, known: 0, notKnown: 0});
-      map.get(key).known++;
-    });
-    s.notKnown.forEach(w => {
-      const key = w.en.toLowerCase();
-      if (!map.has(key)) map.set(key, {en: w.en, th: w.th, known: 0, notKnown: 0});
-      map.get(key).notKnown++;
-    });
+    s.known.forEach(w => addWord(w, 'known'));
+    s.notKnown.forEach(w => addWord(w, 'notKnown'));
   });
   const words = [...map.values()].sort((a, b) => {
     const ra = a.notKnown / (a.known + a.notKnown);
@@ -1068,10 +1065,16 @@ function refreshPerWord() {
     const total = w.known + w.notKnown;
     const knownPct = total > 0 ? Math.round(w.known / total * 100) : 0;
     const notKnownPct = 100 - knownPct;
+    const catChip = w.cat
+      ? `<button class="word-cat-chip" data-cat="${esc(w.cat)}" onclick="navToHistTab('bycat',{cat:this.dataset.cat})">${esc(w.cat)}</button>`
+      : '';
     const d = document.createElement('div');
     d.className = 'word-stat-item';
+    d.dataset.word = w.en.toLowerCase();
     d.innerHTML =
-      `<div class="word-stat-label">${esc(w.en)}</div>
+      `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+         <span class="word-stat-label">${esc(w.en)}</span>${catChip}
+       </div>
        <div class="word-stat-meaning">${esc(w.th)}</div>
        <div class="word-stat-bar">
          <div class="bar-notknown" style="width:${notKnownPct}%"></div>
@@ -1085,10 +1088,121 @@ function refreshPerWord() {
        </div>`;
     list.appendChild(d);
   });
+  if (histFocusWord) {
+    const focusKey = histFocusWord;
+    histFocusWord = null;
+    setTimeout(() => {
+      for (const el of list.querySelectorAll('[data-word]')) {
+        if (el.dataset.word === focusKey) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          el.classList.add('focused');
+          setTimeout(() => el.classList.remove('focused'), 2000);
+          break;
+        }
+      }
+    }, 80);
+  }
+}
+function refreshByCategory() {
+  const sessions = loadHistory();
+  const empty = document.getElementById('bycat-empty');
+  const list = document.getElementById('bycat-list');
+  list.innerHTML = '';
+  if (!sessions.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  const wordMap = new Map();
+  const addWord = (w, result) => {
+    const key = w.en.toLowerCase();
+    if (!wordMap.has(key)) {
+      const catWord = getAllWords().find(v => v.en.toLowerCase() === key);
+      wordMap.set(key, {en: w.en, th: w.th, cat: catWord ? catWord.cat : 'อื่นๆ', known: 0, notKnown: 0});
+    }
+    wordMap.get(key)[result]++;
+  };
+  sessions.forEach(s => {
+    s.known.forEach(w => addWord(w, 'known'));
+    s.notKnown.forEach(w => addWord(w, 'notKnown'));
+  });
+  const catMap = new Map();
+  wordMap.forEach(w => {
+    if (!catMap.has(w.cat)) catMap.set(w.cat, {name: w.cat, words: [], known: 0, notKnown: 0});
+    const entry = catMap.get(w.cat);
+    entry.words.push(w);
+    entry.known += w.known;
+    entry.notKnown += w.notKnown;
+  });
+  const cats = [...catMap.values()].sort((a, b) => {
+    const ra = a.notKnown / (a.known + a.notKnown);
+    const rb = b.notKnown / (b.known + b.notKnown);
+    return rb - ra;
+  });
+  const focusCat = histFocusCat;
+  histFocusCat = null;
+  cats.forEach(cat => {
+    const total = cat.known + cat.notKnown;
+    const notKnownPct = total > 0 ? Math.round(cat.notKnown / total * 100) : 0;
+    const knownPct = 100 - notKnownPct;
+    cat.words.sort((a, b) => {
+      const ra = a.notKnown / (a.known + a.notKnown);
+      const rb = b.notKnown / (b.known + b.notKnown);
+      return rb - ra;
+    });
+    const wordRows = cat.words.map(w => {
+      const wTotal = w.known + w.notKnown;
+      const wNKPct = wTotal > 0 ? Math.round(w.notKnown / wTotal * 100) : 0;
+      return `<div style="padding:8px 0;border-bottom:.5px solid var(--bd2)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          <div>
+            <span style="font-size:13px;font-weight:500;color:var(--tx)">${esc(w.en)}</span>
+            <span style="font-size:12px;color:var(--tx2);margin-left:6px">${esc(w.th)}</span>
+          </div>
+          <button class="nav-link" data-word="${esc(w.en.toLowerCase())}" onclick="navToHistTab('perword',{word:this.dataset.word})">↗ รายคำ</button>
+        </div>
+        <div class="word-stat-bar">
+          <div class="bar-notknown" style="width:${wNKPct}%"></div>
+          <div class="bar-known" style="width:${100-wNKPct}%"></div>
+        </div>
+        <div style="font-size:11px;color:var(--tx3);margin-top:3px">
+          <span style="color:var(--tx-err)">ไม่รู้ ${w.notKnown}</span> · <span style="color:var(--tx-ok)">รู้ ${w.known}</span> · รวม ${wTotal} ครั้ง
+        </div>
+      </div>`;
+    }).join('');
+    const d = document.createElement('div');
+    d.className = 'hist-session' + (focusCat === cat.name ? ' expanded' : '');
+    d.dataset.cat = cat.name;
+    d.innerHTML =
+      `<div class="hist-session-header" onclick="toggleSession(this)">
+        <i class="ti ti-chevron-right hist-expand-icon"></i>
+        <div style="flex:1">
+          <div class="hist-meta">
+            <span style="font-size:13px;font-weight:500;color:var(--tx)">${esc(cat.name)}</span>
+            <span class="hist-badge">${cat.words.length} คำ</span>
+          </div>
+          <div class="hist-score">ไม่รู้ <b style="color:var(--tx-err)">${cat.notKnown}</b> · รู้ <b style="color:var(--tx-ok)">${cat.known}</b> · ${notKnownPct}% ต้องฝึก</div>
+          <div class="word-stat-bar" style="margin-top:6px">
+            <div class="bar-notknown" style="width:${notKnownPct}%"></div>
+            <div class="bar-known" style="width:${knownPct}%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="hist-table-wrap">
+        <div style="padding:0 4px 4px">${wordRows}</div>
+      </div>`;
+    list.appendChild(d);
+  });
+  if (focusCat) {
+    setTimeout(() => {
+      for (const el of list.querySelectorAll('[data-cat]')) {
+        if (el.dataset.cat === focusCat) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          break;
+        }
+      }
+    }, 80);
+  }
 }
 function refreshTrend() {
-  const allSessions = loadHistory();
-  const sessions = histCategoryFilter === 'ทั้งหมด' ? allSessions : allSessions.filter(s => s.cat === histCategoryFilter);
+  const sessions = loadHistory();
   const empty = document.getElementById('trend-empty');
   const chart = document.getElementById('trend-chart');
   chart.innerHTML = '';
