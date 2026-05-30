@@ -1,65 +1,176 @@
-
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>VocabCards ม.ต้น–ม.ปลาย</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap');
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-.app{font-family:'Sarabun',sans-serif;background:var(--color-background-tertiary);min-height:100vh;padding:0;display:flex;flex-direction:column;align-items:center}
-.topbar{width:100%;background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:14px 16px 10px;display:flex;flex-direction:column;align-items:center;gap:8px}
-.appname{font-size:17px;font-weight:500;color:var(--color-text-primary);letter-spacing:0.2px}
-.appname span{color:var(--color-text-info)}
-.cats{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
-.cat-btn{font-family:'Sarabun',sans-serif;font-size:12px;padding:5px 12px;border-radius:99px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-secondary);cursor:pointer;transition:all .15s;font-weight:400}
-.cat-btn.active{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info);font-weight:500}
-.prog-wrap{width:100%;padding:10px 16px 0;display:flex;flex-direction:column;gap:4px}
+:root {
+  --bg: #ffffff; --bg2: #f8f9fa; --bg3: #f3f4f6;
+  --bg-info: #eff6ff; --bg-ok: #f0fdf4; --bg-err: #fef2f2;
+  --tx: #111827; --tx2: #6b7280; --tx3: #9ca3af;
+  --tx-info: #2563eb; --tx-ok: #16a34a; --tx-err: #dc2626;
+  --bd: #e5e7eb; --bd2: #f3f4f6;
+  --bd-info: #bfdbfe; --bd-ok: #bbf7d0; --bd-err: #fecaca;
+  --r: 10px; --rl: 16px;
+}
+*,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%;overflow-x:hidden}
+body{font-family:'Sarabun',sans-serif;background:var(--bg3)}
+
+.app{min-height:100dvh;display:flex;flex-direction:column;align-items:center}
+
+/* topbar */
+.topbar{width:100%;background:var(--bg);border-bottom:.5px solid var(--bd2);padding:12px 16px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;position:sticky;top:0;z-index:20}
+.topbar-row{width:100%;display:flex;align-items:center;justify-content:space-between}
+.appname{font-size:17px;font-weight:500;color:var(--tx);letter-spacing:.2px}
+.appname span{color:var(--tx-info)}
+.import-btn{display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:var(--r);border:.5px solid var(--bd);background:var(--bg2);color:var(--tx2);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.import-btn:active{transform:scale(.97)}
+.cats{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;width:100%}
+.cat-btn{font-family:'Sarabun',sans-serif;font-size:12px;padding:5px 12px;border-radius:99px;border:.5px solid var(--bd);background:var(--bg2);color:var(--tx2);cursor:pointer;transition:all .15s;white-space:nowrap}
+.cat-btn.active{background:var(--bg-info);color:var(--tx-info);border-color:var(--bd-info);font-weight:500}
+
+/* progress */
+.prog-wrap{width:100%;max-width:500px;padding:10px 16px 0;display:flex;flex-direction:column;gap:4px}
 .prog-row{display:flex;justify-content:space-between;align-items:center}
-.prog-label{font-size:12px;color:var(--color-text-secondary)}
-.prog-bar{width:100%;height:4px;background:var(--color-border-tertiary);border-radius:99px;overflow:hidden}
-.prog-fill{height:100%;background:var(--color-text-info);border-radius:99px;transition:width .35s ease}
-.card-area{width:100%;max-width:420px;padding:16px;flex:1;display:flex;flex-direction:column;gap:12px}
-.card-wrap{width:100%;perspective:900px}
-.card-inner{width:100%;position:relative;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1);cursor:pointer}
-.card-face{position:absolute;width:100%;backface-visibility:hidden;border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px}
-.card-back{transform:rotateY(180deg);background:var(--color-background-secondary)}
+.prog-label{font-size:12px;color:var(--tx2)}
+.prog-bar{width:100%;height:4px;background:var(--bd2);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;background:var(--tx-info);border-radius:99px;transition:width .35s ease}
+
+/* card area */
+.card-area{width:100%;max-width:500px;padding:12px 16px;flex:1;display:flex;flex-direction:column;gap:10px}
+
+/* card */
+.card-wrap{width:100%;position:relative;overflow:visible}
+.card-drag{width:100%;position:relative;perspective:900px;will-change:transform}
+.card-inner{width:100%;height:250px;position:relative;transform-style:preserve-3d;-webkit-transform-style:preserve-3d;transition:transform .45s cubic-bezier(.4,0,.2,1);cursor:pointer}
+.card-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:var(--rl);border:.5px solid var(--bd2);background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px;overflow:hidden}
+.card-back{transform:rotateY(180deg);background:var(--bg2)}
 .card-inner.flipped{transform:rotateY(180deg)}
-.card-tag{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--color-text-tertiary);margin-bottom:12px;font-weight:400}
-.card-en{font-size:2.2rem;font-weight:700;color:var(--color-text-primary);text-align:center;line-height:1.1;margin:0 0 6px}
-.card-ph{font-size:13px;color:var(--color-text-tertiary);margin:0 0 14px;font-weight:300}
-.card-level{font-size:11px;padding:3px 10px;border-radius:99px;border:0.5px solid var(--color-border-secondary);color:var(--color-text-secondary);background:var(--color-background-secondary)}
-.card-hint{font-size:12px;color:var(--color-text-tertiary);margin-top:16px;display:flex;align-items:center;gap:4px}
-.card-th{font-size:1.7rem;font-weight:700;color:var(--color-text-info);text-align:center;line-height:1.2;margin:0 0 8px}
-.card-ex{font-size:13px;color:var(--color-text-secondary);text-align:center;line-height:1.6;font-style:italic;font-weight:300;max-width:280px}
-.card-ex-th{font-size:13px;color:var(--color-text-tertiary);text-align:center;line-height:1.5;margin-top:6px;font-weight:300}
-.reveal-btn{width:100%;padding:14px;border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-info);background:var(--color-background-info);color:var(--color-text-info);font-family:'Sarabun',sans-serif;font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s}
-.reveal-btn:active{transform:scale(0.98)}
+.card-tag{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--tx3);margin-bottom:10px;font-weight:400}
+.card-en{font-size:2.1rem;font-weight:700;color:var(--tx);text-align:center;line-height:1.1;margin:0 0 5px}
+.card-ph{font-size:13px;color:var(--tx3);margin:0 0 12px;font-weight:300}
+.card-level{font-size:11px;padding:3px 10px;border-radius:99px;border:.5px solid var(--bd);color:var(--tx2);background:var(--bg2)}
+.card-hint{font-size:12px;color:var(--tx3);margin-top:14px;display:flex;align-items:center;gap:4px}
+.card-th{font-size:1.6rem;font-weight:700;color:var(--tx-info);text-align:center;line-height:1.2;margin:0 0 8px}
+.card-ex{font-size:13px;color:var(--tx2);text-align:center;line-height:1.6;font-style:italic;font-weight:300;max-width:280px}
+.card-ex-th{font-size:12px;color:var(--tx3);text-align:center;line-height:1.5;margin-top:5px;font-weight:300}
+
+/* swipe labels */
+.swipe-label{position:absolute;top:50%;transform:translateY(-50%);font-size:18px;font-weight:700;padding:8px 14px;border-radius:var(--r);opacity:0;pointer-events:none;z-index:5;white-space:nowrap;border-width:2px;border-style:solid}
+.swipe-know{right:12px;color:var(--tx-ok);border-color:var(--tx-ok);background:var(--bg-ok)}
+.swipe-dontknow{left:12px;color:var(--tx-err);border-color:var(--tx-err);background:var(--bg-err)}
+.swipe-skip{top:auto;bottom:10px;left:50%;transform:translateX(-50%);font-size:14px;color:var(--tx2);border-color:var(--bd);background:var(--bg2)}
+
+/* swipe hint bar (mobile) */
+.swipe-hint{display:none;align-items:center;justify-content:center;gap:12px;font-size:12px;color:var(--tx3);padding:4px 0}
+.hint-l{color:var(--tx-err)} .hint-r{color:var(--tx-ok)}
+
+/* buttons */
+.reveal-btn{width:100%;padding:14px;border-radius:var(--rl);border:.5px solid var(--bd-info);background:var(--bg-info);color:var(--tx-info);font-family:'Sarabun',sans-serif;font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s}
+.reveal-btn:active{transform:scale(.98)}
 .result-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.res-btn{padding:13px;border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);font-family:'Sarabun',sans-serif;font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
-.res-btn:active{transform:scale(0.97)}
-.btn-know{background:var(--color-background-success);color:var(--color-text-success);border-color:var(--color-border-success)}
-.btn-dontknow{background:var(--color-background-danger);color:var(--color-text-danger);border-color:var(--color-border-danger)}
+.res-btn{padding:14px;border-radius:var(--rl);border:.5px solid var(--bd);font-family:'Sarabun',sans-serif;font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
+.res-btn:active{transform:scale(.97)}
+.btn-know{background:var(--bg-ok);color:var(--tx-ok);border-color:var(--bd-ok)}
+.btn-dontknow{background:var(--bg-err);color:var(--tx-err);border-color:var(--bd-err)}
 .nav-row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
-.nav-btn{padding:11px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-secondary);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .15s}
-.nav-btn:active{transform:scale(0.97)}
-.shuffle-btn{padding:11px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-tertiary);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
-.shuffle-btn:active{transform:scale(0.97)}
+.nav-btn{padding:11px;border-radius:var(--r);border:.5px solid var(--bd);background:var(--bg2);color:var(--tx2);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .15s}
+.nav-btn:active{transform:scale(.97)}
+.shuffle-btn{padding:11px 14px;border-radius:var(--r);border:.5px solid var(--bd);background:var(--bg2);color:var(--tx3);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.shuffle-btn:active{transform:scale(.97)}
+
+/* stats */
 .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.stat-box{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 8px;text-align:center}
-.stat-num{font-size:20px;font-weight:500;display:block;color:var(--color-text-primary)}
-.stat-num.s{color:var(--color-text-success)}
-.stat-num.d{color:var(--color-text-danger)}
-.stat-lbl{font-size:11px;color:var(--color-text-tertiary)}
-.done-box{width:100%;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:28px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
-.done-title{font-size:22px;font-weight:700;color:var(--color-text-primary)}
-.done-sub{font-size:14px;color:var(--color-text-secondary);line-height:1.6}
-.done-restart{padding:13px 24px;border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-info);background:var(--color-background-info);color:var(--color-text-info);font-family:'Sarabun',sans-serif;font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s}
-.done-restart:active{transform:scale(0.97)}
+.stat-box{background:var(--bg2);border-radius:var(--r);padding:10px 8px;text-align:center}
+.stat-num{font-size:20px;font-weight:500;display:block;color:var(--tx)}
+.stat-num.s{color:var(--tx-ok)} .stat-num.d{color:var(--tx-err)}
+.stat-lbl{font-size:11px;color:var(--tx3)}
+
+/* done */
+.done-box{width:100%;background:var(--bg);border:.5px solid var(--bd2);border-radius:var(--rl);padding:28px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
+.done-title{font-size:22px;font-weight:700;color:var(--tx)}
+.done-sub{font-size:14px;color:var(--tx2);line-height:1.6}
+.done-restart{padding:13px 24px;border-radius:var(--rl);border:.5px solid var(--bd-info);background:var(--bg-info);color:var(--tx-info);font-family:'Sarabun',sans-serif;font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s}
+.done-restart:active{transform:scale(.97)}
+
+/* modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.modal-backdrop.open{opacity:1;pointer-events:all}
+.modal{width:100%;max-width:560px;background:var(--bg);border-radius:20px 20px 0 0;max-height:90dvh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.modal-backdrop.open .modal{transform:translateY(0)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:.5px solid var(--bd2);flex-shrink:0}
+.modal-title{font-size:16px;font-weight:500;color:var(--tx)}
+.modal-close{width:32px;height:32px;border-radius:50%;border:none;background:var(--bg2);color:var(--tx2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px}
+.modal-tabs{display:flex;border-bottom:.5px solid var(--bd2);flex-shrink:0;overflow-x:auto}
+.modal-tab{flex:1;min-width:0;padding:10px 6px;font-family:'Sarabun',sans-serif;font-size:13px;border:none;background:none;color:var(--tx2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+.modal-tab.active{color:var(--tx-info);border-bottom-color:var(--tx-info);font-weight:500}
+.modal-body{overflow-y:auto;flex:1;padding:16px 20px;display:flex;flex-direction:column;gap:12px}
+.tab-panel{display:none;flex-direction:column;gap:12px}
+.tab-panel.active{display:flex}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:13px;color:var(--tx2)}
+.form-input{font-family:'Sarabun',sans-serif;font-size:15px;padding:10px 12px;border-radius:var(--r);border:.5px solid var(--bd);background:var(--bg);color:var(--tx);outline:none;transition:border-color .15s;width:100%}
+.form-input:focus{border-color:var(--tx-info)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-hint{font-size:12px;color:var(--tx3);line-height:1.7}
+textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
+.action-btn{width:100%;padding:13px;border-radius:var(--rl);border:.5px solid var(--bd-info);background:var(--bg-info);color:var(--tx-info);font-family:'Sarabun',sans-serif;font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s}
+.action-btn:active{transform:scale(.98)}
+.action-btn.danger{border-color:var(--bd-err);background:var(--bg-err);color:var(--tx-err)}
+.result-msg{font-size:13px;padding:8px 12px;border-radius:var(--r);display:none}
+.file-zone{border:2px dashed var(--bd);border-radius:var(--rl);padding:24px 20px;text-align:center;cursor:pointer;transition:border-color .15s}
+.file-zone:hover{border-color:var(--tx-info)}
+.file-zone input{display:none}
+.custom-list{display:flex;flex-direction:column;gap:6px}
+.custom-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg2);border-radius:var(--r);gap:8px}
+.custom-item-text{flex:1;min-width:0}
+.ci-en{font-size:14px;font-weight:500;color:var(--tx)}
+.ci-th{font-size:12px;color:var(--tx2)}
+.ci-del{width:30px;height:30px;border-radius:50%;border:none;background:var(--bg-err);color:var(--tx-err);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.empty-state{font-size:14px;color:var(--tx3);text-align:center;padding:20px 0}
+
+/* utils */
 .hidden{display:none!important}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
-</style>
 
+/* desktop */
+@media(min-width:600px){
+  .modal{border-radius:20px;max-height:80vh}
+  .modal-backdrop{align-items:center}
+}
+
+/* mobile */
+@media(max-width:599px){
+  .topbar{padding:10px 14px 8px}
+  .card-area{padding:10px 12px;gap:8px}
+  .card-face{padding:20px 16px}
+  .card-en{font-size:1.9rem}
+  .card-th{font-size:1.45rem}
+  .card-inner{height:240px}
+  .res-btn{padding:15px 8px}
+  .swipe-hint{display:flex}
+  .cat-btn{font-size:11px;padding:4px 10px}
+}
+</style>
+</head>
+<body>
 <h2 class="sr-only">คลังคำศัพท์ภาษาอังกฤษระดับ ม.1–ม.6 แบบ flashcard พร้อมคำแปลภาษาไทย</h2>
 
 <div class="app">
   <div class="topbar">
-    <div class="appname">Vocab<span>Cards</span> ม.ต้น–ม.ปลาย</div>
+    <div class="topbar-row">
+      <div class="appname">Vocab<span>Cards</span> ม.ต้น–ม.ปลาย</div>
+      <button class="import-btn" onclick="openImport()">
+        <i class="ti ti-plus"></i> เพิ่มคำศัพท์
+      </button>
+    </div>
     <div class="cats" id="cats"></div>
   </div>
 
@@ -72,37 +183,50 @@
   </div>
 
   <div class="card-area">
-    <div class="card-wrap" id="cardWrap" style="height:220px">
-      <div class="card-inner" id="cardInner" onclick="flip()">
-        <div class="card-face" style="height:220px">
-          <div class="card-tag">คำศัพท์ภาษาอังกฤษ</div>
-          <div class="card-en" id="cEn">—</div>
-          <div class="card-ph" id="cPh"></div>
-          <div class="card-level" id="cLv"></div>
-          <div class="card-hint"><i class="ti ti-hand-click" aria-hidden="true" style="font-size:14px"></i> แตะการ์ดเพื่อดูความหมาย</div>
+    <div class="card-wrap" id="cardWrap">
+      <div class="card-drag" id="cardDrag">
+        <div class="card-inner" id="cardInner" onclick="handleCardTap()">
+          <div class="card-face" id="cardFront">
+            <div class="card-tag">คำศัพท์ภาษาอังกฤษ</div>
+            <div class="card-en" id="cEn">—</div>
+            <div class="card-ph" id="cPh"></div>
+            <div class="card-level" id="cLv"></div>
+            <div class="card-hint"><i class="ti ti-hand-click" style="font-size:14px"></i> แตะการ์ดเพื่อดูความหมาย</div>
+          </div>
+          <div class="card-face card-back" id="cardBack">
+            <div class="card-tag">คำแปลภาษาไทย</div>
+            <div class="card-th" id="cTh">—</div>
+            <div class="card-ex" id="cEx"></div>
+            <div class="card-ex-th" id="cExTh"></div>
+          </div>
         </div>
-        <div class="card-face card-back" style="height:220px">
-          <div class="card-tag">คำแปลภาษาไทย</div>
-          <div class="card-th" id="cTh">—</div>
-          <div class="card-ex" id="cEx"></div>
-          <div class="card-ex-th" id="cExTh"></div>
-        </div>
+        <div class="swipe-label swipe-know" id="lblKnow"><i class="ti ti-check"></i> รู้แล้ว!</div>
+        <div class="swipe-label swipe-dontknow" id="lblDont"><i class="ti ti-x"></i> ยังไม่รู้</div>
+        <div class="swipe-label swipe-skip" id="lblSkip">↓ ข้าม</div>
       </div>
     </div>
 
+    <div class="swipe-hint" id="swipeHint">
+      <span class="hint-l">← ยังไม่รู้</span>
+      <span style="color:var(--bd)">|</span>
+      <span class="hint-r">รู้แล้ว →</span>
+      <span style="color:var(--bd)">|</span>
+      <span>↓ ข้าม</span>
+    </div>
+
     <button class="reveal-btn" id="revealBtn" onclick="flip()">
-      <i class="ti ti-eye" aria-hidden="true" style="font-size:17px"></i> ดูความหมาย
+      <i class="ti ti-eye" style="font-size:17px"></i> ดูความหมาย
     </button>
 
     <div class="result-row hidden" id="resultRow">
-      <button class="res-btn btn-dontknow" onclick="mark(false)"><i class="ti ti-x" aria-hidden="true"></i> ยังไม่รู้</button>
-      <button class="res-btn btn-know" onclick="mark(true)"><i class="ti ti-check" aria-hidden="true"></i> รู้แล้ว!</button>
+      <button class="res-btn btn-dontknow" onclick="mark(false)"><i class="ti ti-x"></i> ยังไม่รู้</button>
+      <button class="res-btn btn-know" onclick="mark(true)"><i class="ti ti-check"></i> รู้แล้ว!</button>
     </div>
 
     <div class="nav-row">
-      <button class="nav-btn" onclick="go(-1)"><i class="ti ti-arrow-left" aria-hidden="true"></i> ก่อนหน้า</button>
-      <button class="shuffle-btn" onclick="shuffleAll()" title="สุ่มใหม่" aria-label="สุ่มใหม่"><i class="ti ti-arrows-shuffle" aria-hidden="true" style="font-size:18px"></i></button>
-      <button class="nav-btn" onclick="go(1)">ถัดไป <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+      <button class="nav-btn" onclick="go(-1)"><i class="ti ti-arrow-left"></i> ก่อนหน้า</button>
+      <button class="shuffle-btn" onclick="shuffleAll()" title="สุ่มใหม่" aria-label="สุ่มใหม่"><i class="ti ti-arrows-shuffle" style="font-size:18px"></i></button>
+      <button class="nav-btn" onclick="go(1)">ถัดไป <i class="ti ti-arrow-right"></i></button>
     </div>
 
     <div class="stats-row">
@@ -114,7 +238,105 @@
     <div class="done-box hidden" id="doneBox">
       <div class="done-title">เสร็จแล้ว!</div>
       <div class="done-sub" id="doneSub"></div>
-      <button class="done-restart" onclick="restart()"><i class="ti ti-refresh" aria-hidden="true"></i> เริ่มใหม่</button>
+      <button class="done-restart" onclick="restart()"><i class="ti ti-refresh"></i> เริ่มใหม่</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal-backdrop" id="modalBackdrop" onclick="handleBackdropClick(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">เพิ่มคำศัพท์</div>
+      <button class="modal-close" onclick="closeImport()"><i class="ti ti-x" style="font-size:14px"></i></button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchTab('manual')">พิมพ์เอง</button>
+      <button class="modal-tab" onclick="switchTab('paste')">วางข้อความ</button>
+      <button class="modal-tab" onclick="switchTab('file')">ไฟล์ CSV/TXT</button>
+      <button class="modal-tab" onclick="switchTab('manage')">จัดการ</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Tab: Manual -->
+      <div class="tab-panel active" id="tab-manual">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">คำภาษาอังกฤษ *</label>
+            <input class="form-input" id="inp-en" placeholder="เช่น Grateful" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label">คำแปลภาษาไทย *</label>
+            <input class="form-input" id="inp-th" placeholder="เช่น รู้สึกขอบคุณ" autocomplete="off">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">การออกเสียง</label>
+            <input class="form-input" id="inp-ph" placeholder="/ˈɡreɪt.fəl/" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label">ระดับ</label>
+            <select class="form-input" id="inp-lv">
+              <option>ม.1</option><option>ม.2</option><option>ม.3</option>
+              <option>ม.4</option><option>ม.5</option><option>ม.6</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ประโยคตัวอย่าง (English)</label>
+          <input class="form-input" id="inp-ex" placeholder='I am grateful for your help.' autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">แปลประโยค (ภาษาไทย)</label>
+          <input class="form-input" id="inp-exth" placeholder="ฉันขอบคุณสำหรับความช่วยเหลือ" autocomplete="off">
+        </div>
+        <button class="action-btn" onclick="addManual()"><i class="ti ti-plus"></i> เพิ่มคำศัพท์</button>
+        <div class="result-msg" id="manual-msg"></div>
+      </div>
+
+      <!-- Tab: Paste -->
+      <div class="tab-panel" id="tab-paste">
+        <div class="form-hint">
+          วางข้อความ 1 คำต่อบรรทัด รองรับหลายรูปแบบ:<br>
+          <b>คำอังกฤษ - คำแปลไทย</b><br>
+          <b>คำอังกฤษ, คำแปลไทย</b><br>
+          <b>คำอังกฤษ[Tab]คำแปลไทย</b><br><br>
+          คัดลอกจาก LINE, Notes, Google Keep แล้ววางได้เลย
+        </div>
+        <div class="form-group">
+          <label class="form-label">วางข้อความที่นี่</label>
+          <textarea class="form-input" id="inp-paste" placeholder="Absent - ขาด / ไม่อยู่&#10;Polite - สุภาพ&#10;Curious, อยากรู้อยากเห็น"></textarea>
+        </div>
+        <div class="result-msg" id="paste-msg"></div>
+        <button class="action-btn" onclick="importPaste()"><i class="ti ti-download"></i> นำเข้าคำศัพท์</button>
+      </div>
+
+      <!-- Tab: File -->
+      <div class="tab-panel" id="tab-file">
+        <div class="form-hint">
+          รองรับไฟล์ <b>.txt</b> และ <b>.csv</b><br>
+          ดาวน์โหลดจาก Google Drive · LINE · อีเมล · Files ในมือถือ<br><br>
+          <b>TXT:</b> อังกฤษ - ไทย (1 บรรทัดต่อ 1 คำ)<br>
+          <b>CSV:</b> คอลัมน์ 1=อังกฤษ, 2=ไทย, 3=การออกเสียง (ไม่บังคับ), 4=ประโยค (ไม่บังคับ)
+        </div>
+        <div class="file-zone" onclick="document.getElementById('fileInput').click()">
+          <i class="ti ti-file-upload" style="font-size:36px;color:var(--tx3)"></i>
+          <div style="font-size:14px;color:var(--tx2);margin-top:8px">แตะเพื่อเลือกไฟล์</div>
+          <div style="font-size:12px;color:var(--tx3);margin-top:4px">.txt หรือ .csv</div>
+          <input type="file" id="fileInput" accept=".txt,.csv,text/plain,text/csv" onchange="handleFileUpload(event)">
+        </div>
+        <div class="result-msg" id="file-msg"></div>
+        <button class="action-btn hidden" id="file-import-btn" onclick="importFileData()"><i class="ti ti-download"></i> นำเข้าคำศัพท์</button>
+      </div>
+
+      <!-- Tab: Manage -->
+      <div class="tab-panel" id="tab-manage">
+        <div class="empty-state" id="custom-empty">ยังไม่มีคำศัพท์ที่เพิ่มเอง</div>
+        <div class="custom-list" id="custom-list"></div>
+        <button class="action-btn danger hidden" id="clear-btn" onclick="clearAllCustom()"><i class="ti ti-trash"></i> ลบทั้งหมด</button>
+      </div>
+
     </div>
   </div>
 </div>
@@ -153,40 +375,74 @@ const ALL = [
   {en:"Welfare",ph:"/ˈwel.feər/",th:"สวัสดิภาพ / ความเป็นอยู่ที่ดี",ex:"The government cares about public welfare.",exth:"รัฐบาลดูแลสวัสดิภาพของประชาชน",lv:"ม.5",cat:"ราชการ"},
 ];
 
-const CATS = ["ทั้งหมด","ชีวิตประจำวัน","อารมณ์","การทำงาน","สังคม","ราชการ"];
+// ── state ──
+const BASE_CATS = ["ทั้งหมด","ชีวิตประจำวัน","อารมณ์","การทำงาน","สังคม","ราชการ"];
 let activeCat = "ทั้งหมด";
 let deck = [], idx = 0, known = 0, notKnown = 0, flipped = false, done = false;
 
-function filtered(){ return activeCat === "ทั้งหมด" ? [...ALL] : ALL.filter(w=>w.cat===activeCat); }
-function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a; }
+// ── custom vocab (localStorage) ──
+function loadCustom() {
+  try { return JSON.parse(localStorage.getItem('customVocab') || '[]'); } catch { return []; }
+}
+function saveCustom(arr) { localStorage.setItem('customVocab', JSON.stringify(arr)); }
+function getAllWords() { return [...ALL, ...loadCustom()]; }
+function filtered() {
+  const all = getAllWords();
+  return activeCat === 'ทั้งหมด' ? [...all] : all.filter(w => w.cat === activeCat);
+}
+function getCats() {
+  const cats = [...BASE_CATS];
+  if (loadCustom().length > 0) cats.push('คำของฉัน');
+  return cats;
+}
 
-function buildCats(){
+// ── categories ──
+function buildCats() {
   const c = document.getElementById('cats');
-  CATS.forEach(name=>{
+  c.innerHTML = '';
+  getCats().forEach(name => {
     const b = document.createElement('button');
-    b.className = 'cat-btn' + (name===activeCat?' active':'');
+    b.className = 'cat-btn' + (name === activeCat ? ' active' : '');
     b.textContent = name;
-    b.onclick = ()=>{ activeCat=name; document.querySelectorAll('.cat-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); restart(); };
+    b.onclick = () => {
+      activeCat = name;
+      document.querySelectorAll('.cat-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      restart();
+    };
     c.appendChild(b);
   });
 }
 
-function render(){
-  if(idx >= deck.length){ showDone(); return; }
+// ── shuffle ──
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.random() * (i + 1) | 0;
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ── render ──
+function render() {
+  if (idx >= deck.length) { showDone(); return; }
   const w = deck[idx];
   document.getElementById('cEn').textContent = w.en;
-  document.getElementById('cPh').textContent = w.ph;
-  document.getElementById('cLv').textContent = w.lv + ' · ' + w.cat;
+  document.getElementById('cPh').textContent = w.ph || '';
+  document.getElementById('cLv').textContent = (w.lv || '') + (w.lv && w.cat ? ' · ' : '') + (w.cat || '');
   document.getElementById('cTh').textContent = w.th;
-  document.getElementById('cEx').textContent = '"' + w.ex + '"';
-  document.getElementById('cExTh').textContent = w.exth;
-  document.getElementById('cardInner').classList.remove('flipped');
+  document.getElementById('cEx').textContent = w.ex ? '"' + w.ex + '"' : '';
+  document.getElementById('cExTh').textContent = w.exth || '';
+  const ci = document.getElementById('cardInner');
+  ci.style.transition = 'transform .45s cubic-bezier(.4,0,.2,1)';
+  ci.classList.remove('flipped');
   document.getElementById('revealBtn').classList.remove('hidden');
   document.getElementById('resultRow').classList.add('hidden');
   flipped = false;
+  resetDrag();
   const pct = Math.round(idx / deck.length * 100);
   document.getElementById('progFill').style.width = pct + '%';
-  document.getElementById('progLabel').textContent = (idx+1) + ' / ' + deck.length;
+  document.getElementById('progLabel').textContent = (idx + 1) + ' / ' + deck.length;
   document.getElementById('progPct').textContent = pct + '%';
   document.getElementById('stK').textContent = known;
   document.getElementById('stD').textContent = notKnown;
@@ -195,25 +451,20 @@ function render(){
   document.getElementById('cardWrap').classList.remove('hidden');
 }
 
-function flip(){
-  if(done) return;
-  if(!flipped){
-    flipped = true;
-    document.getElementById('cardInner').classList.add('flipped');
-    document.getElementById('revealBtn').classList.add('hidden');
-    document.getElementById('resultRow').classList.remove('hidden');
-  } else {
-    flipped = false;
-    document.getElementById('cardInner').classList.remove('flipped');
-    document.getElementById('revealBtn').classList.remove('hidden');
-    document.getElementById('resultRow').classList.add('hidden');
-  }
+function flip() {
+  if (done) return;
+  flipped = !flipped;
+  document.getElementById('cardInner').classList.toggle('flipped', flipped);
+  document.getElementById('revealBtn').classList.toggle('hidden', flipped);
+  document.getElementById('resultRow').classList.toggle('hidden', !flipped);
 }
 
-function mark(k){ if(k) known++; else notKnown++; idx++; render(); }
-function go(d){ idx = Math.max(0, Math.min(deck.length-1, idx+d)); render(); }
-function shuffleAll(){ deck = shuffle(filtered()); idx=0; known=0; notKnown=0; done=false; render(); }
-function showDone(){
+function mark(k) { if (k) known++; else notKnown++; idx++; render(); }
+function skip() { idx++; render(); }
+function go(d) { idx = Math.max(0, Math.min(deck.length - 1, idx + d)); flipped = false; render(); }
+function shuffleAll() { deck = shuffle(filtered()); idx = 0; known = 0; notKnown = 0; done = false; render(); }
+
+function showDone() {
   done = true;
   document.getElementById('cardWrap').classList.add('hidden');
   document.getElementById('revealBtn').classList.add('hidden');
@@ -227,8 +478,223 @@ function showDone(){
   document.getElementById('doneSub').textContent = 'รู้แล้ว ' + known + ' คำ · ยังต้องฝึกอีก ' + notKnown + ' คำ จาก ' + deck.length + ' คำทั้งหมด';
   document.getElementById('doneBox').classList.remove('hidden');
 }
-function restart(){ deck=shuffle(filtered()); idx=0; known=0; notKnown=0; done=false; render(); }
 
+function restart() { deck = shuffle(filtered()); idx = 0; known = 0; notKnown = 0; done = false; render(); }
+
+// ── swipe gestures ──
+const H_THR = 72, V_THR = 80;
+let tx0 = 0, ty0 = 0, dragging = false, didMove = false;
+
+const drag = document.getElementById('cardDrag');
+
+function resetDrag() {
+  drag.style.transition = 'transform .25s ease, opacity .25s ease';
+  drag.style.transform = '';
+  drag.style.opacity = '';
+  setTimeout(() => { drag.style.transition = ''; }, 260);
+  document.getElementById('lblKnow').style.opacity = '0';
+  document.getElementById('lblDont').style.opacity = '0';
+  document.getElementById('lblSkip').style.opacity = '0';
+}
+
+function swipeOff(dir, cb) {
+  const vw = window.innerWidth + 250, vh = window.innerHeight + 250;
+  const map = { right: `translateX(${vw}px) rotate(25deg)`, left: `translateX(-${vw}px) rotate(-25deg)`, down: `translateY(${vh}px)` };
+  drag.style.transition = 'transform .3s ease-in, opacity .3s ease-in';
+  drag.style.transform = map[dir];
+  drag.style.opacity = '0';
+  setTimeout(cb, 300);
+}
+
+drag.addEventListener('touchstart', e => {
+  if (done) return;
+  tx0 = e.touches[0].clientX;
+  ty0 = e.touches[0].clientY;
+  dragging = true;
+  didMove = false;
+  drag.style.transition = 'none';
+}, { passive: true });
+
+drag.addEventListener('touchmove', e => {
+  if (!dragging || done || !flipped) return;
+  const dx = e.touches[0].clientX - tx0;
+  const dy = e.touches[0].clientY - ty0;
+  if (Math.hypot(dx, dy) > 6) didMove = true;
+  e.preventDefault();
+  const rot = dx * 0.06;
+  drag.style.transform = `translateX(${dx}px) translateY(${Math.max(0, dy)}px) rotate(${rot}deg)`;
+  const hRat = Math.min(Math.abs(dx) / H_THR, 1);
+  const vRat = Math.min(Math.max(dy, 0) / V_THR, 1);
+  const horiz = Math.abs(dx) > Math.abs(dy) * 0.9;
+  document.getElementById('lblKnow').style.opacity  = horiz && dx > 0 ? hRat : 0;
+  document.getElementById('lblDont').style.opacity  = horiz && dx < 0 ? hRat : 0;
+  document.getElementById('lblSkip').style.opacity  = !horiz && dy > 0 ? vRat : 0;
+}, { passive: false });
+
+drag.addEventListener('touchend', e => {
+  if (!dragging || done) return;
+  dragging = false;
+  const dx = e.changedTouches[0].clientX - tx0;
+  const dy = e.changedTouches[0].clientY - ty0;
+  if (!flipped || !didMove) { resetDrag(); return; }
+  const horiz = Math.abs(dx) > Math.abs(dy) * 0.9;
+  if (horiz && Math.abs(dx) >= H_THR) {
+    swipeOff(dx > 0 ? 'right' : 'left', () => mark(dx > 0));
+  } else if (!horiz && dy >= V_THR) {
+    swipeOff('down', skip);
+  } else {
+    resetDrag();
+  }
+}, { passive: true });
+
+// prevent tap from firing flip after a swipe
+function handleCardTap() {
+  if (didMove) { didMove = false; return; }
+  flip();
+}
+
+// ── import modal ──
+let pendingFile = null;
+
+function openImport()  { document.getElementById('modalBackdrop').classList.add('open'); refreshManage(); }
+function closeImport() { document.getElementById('modalBackdrop').classList.remove('open'); }
+function handleBackdropClick(e) { if (e.target.id === 'modalBackdrop') closeImport(); }
+
+const TAB_IDS = ['manual','paste','file','manage'];
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.modal-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.modal-tab')[TAB_IDS.indexOf(name)].classList.add('active');
+  if (name === 'manage') refreshManage();
+}
+
+function showMsg(id, text, ok) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.style.display = 'block';
+  el.style.background = ok ? 'var(--bg-ok)' : 'var(--bg-err)';
+  el.style.color = ok ? 'var(--tx-ok)' : 'var(--tx-err)';
+  setTimeout(() => { el.style.display = 'none'; }, 3500);
+}
+
+// manual add
+function addManual() {
+  const en = document.getElementById('inp-en').value.trim();
+  const th = document.getElementById('inp-th').value.trim();
+  if (!en || !th) { showMsg('manual-msg', 'กรุณากรอกคำอังกฤษและคำแปล', false); return; }
+  const w = {
+    en, th,
+    ph: document.getElementById('inp-ph').value.trim(),
+    ex: document.getElementById('inp-ex').value.trim(),
+    exth: document.getElementById('inp-exth').value.trim(),
+    lv: document.getElementById('inp-lv').value,
+    cat: 'คำของฉัน'
+  };
+  const arr = loadCustom(); arr.push(w); saveCustom(arr);
+  ['inp-en','inp-th','inp-ph','inp-ex','inp-exth'].forEach(id => document.getElementById(id).value = '');
+  showMsg('manual-msg', 'เพิ่ม "' + en + '" เรียบร้อยแล้ว!', true);
+  buildCats();
+}
+
+// parse text
+function parseText(text) {
+  return text.split('\n').map(l => l.trim()).filter(Boolean).reduce((acc, line) => {
+    let en, th;
+    if (line.includes('\t'))          { [en, ...rest] = line.split('\t'); th = rest.join('\t'); }
+    else if (/\s+-\s+/.test(line))   { [en, th] = line.split(/\s+-\s+/); }
+    else if (line.includes(','))      { [en, ...rest] = line.split(','); th = rest.join(','); }
+    en = en?.trim(); th = th?.trim();
+    if (en && th) acc.push({ en, th, ph:'', ex:'', exth:'', lv:'ม.1', cat:'คำของฉัน' });
+    return acc;
+  }, []);
+}
+
+// paste tab
+document.getElementById('inp-paste').addEventListener('input', function() {
+  const n = parseText(this.value).length;
+  const el = document.getElementById('paste-msg');
+  if (n > 0) { el.textContent = 'พบ ' + n + ' คำ'; el.style.display='block'; el.style.background='var(--bg-ok)'; el.style.color='var(--tx-ok)'; }
+  else el.style.display = 'none';
+});
+
+function importPaste() {
+  const words = parseText(document.getElementById('inp-paste').value);
+  if (!words.length) { showMsg('paste-msg','ไม่พบคำศัพท์ในรูปแบบที่รองรับ', false); return; }
+  const arr = loadCustom(); arr.push(...words); saveCustom(arr);
+  document.getElementById('inp-paste').value = '';
+  document.getElementById('paste-msg').style.display = 'none';
+  showMsg('paste-msg', 'นำเข้า ' + words.length + ' คำ เรียบร้อยแล้ว!', true);
+  buildCats();
+}
+
+// file tab
+function parseCSV(text) {
+  return text.split('\n').map(l => l.trim()).filter(Boolean).reduce((acc, line) => {
+    const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g,''));
+    if (cols.length >= 2 && cols[0] && cols[1])
+      acc.push({ en:cols[0], th:cols[1], ph:cols[2]||'', ex:cols[3]||'', exth:cols[4]||'', lv:cols[5]||'ม.1', cat:'คำของฉัน' });
+    return acc;
+  }, []);
+}
+
+function handleFileUpload(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const words = file.name.endsWith('.csv') ? parseCSV(ev.target.result) : parseText(ev.target.result);
+    pendingFile = words;
+    const ok = words.length > 0;
+    showMsg('file-msg', ok ? 'พบ ' + words.length + ' คำ พร้อมนำเข้า' : 'ไม่พบคำศัพท์ กรุณาตรวจสอบรูปแบบ', ok);
+    document.getElementById('file-import-btn').classList.toggle('hidden', !ok);
+  };
+  reader.readAsText(file, 'UTF-8');
+  e.target.value = '';
+}
+
+function importFileData() {
+  if (!pendingFile?.length) return;
+  const arr = loadCustom(); arr.push(...pendingFile); saveCustom(arr);
+  pendingFile = null;
+  document.getElementById('file-import-btn').classList.add('hidden');
+  showMsg('file-msg', 'นำเข้าเรียบร้อยแล้ว!', true);
+  buildCats();
+}
+
+// manage tab
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function refreshManage() {
+  const custom = loadCustom();
+  const list = document.getElementById('custom-list');
+  const empty = document.getElementById('custom-empty');
+  const btn = document.getElementById('clear-btn');
+  list.innerHTML = '';
+  empty.style.display = custom.length ? 'none' : 'block';
+  btn.classList.toggle('hidden', !custom.length);
+  custom.forEach((w, i) => {
+    const d = document.createElement('div');
+    d.className = 'custom-item';
+    d.innerHTML = `<div class="custom-item-text"><div class="ci-en">${esc(w.en)}</div><div class="ci-th">${esc(w.th)}</div></div><button class="ci-del" onclick="delCustom(${i})"><i class="ti ti-trash" style="font-size:13px"></i></button>`;
+    list.appendChild(d);
+  });
+}
+
+function delCustom(i) {
+  const arr = loadCustom(); arr.splice(i, 1); saveCustom(arr);
+  buildCats(); refreshManage();
+}
+
+function clearAllCustom() {
+  if (!confirm('ลบคำศัพท์ที่เพิ่มเองทั้งหมด?')) return;
+  saveCustom([]);
+  if (activeCat === 'คำของฉัน') activeCat = 'ทั้งหมด';
+  buildCats(); refreshManage(); restart();
+}
+
+// ── init ──
 buildCats();
 restart();
 </script>
+</body>
+</html>
