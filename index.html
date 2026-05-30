@@ -392,13 +392,14 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
           <b>วิธีวางข้อความ</b> — 1 คำต่อ 1 บรรทัด แล้วกด <b>นำเข้าคำศัพท์</b><br><br>
           <b>แบบย่อ</b> (ได้แค่คำ + คำแปล) เลือกรูปแบบใดก็ได้:<br>
           <code>Absent - ขาด / ไม่อยู่</code> &nbsp;คั่นด้วย <b> - </b><br>
-          <code>Polite, สุภาพ</code> &nbsp;คั่นด้วย <b>,</b><br>
-          <code>Curious[Tab]อยากรู้</code> &nbsp;คั่นด้วย <b>Tab</b><br><br>
-          <b>แบบเต็ม</b> (ใส่ครบทุกคุณสมบัติ) — คั่นด้วย <b>Tab</b> ทุกช่อง:<br>
-          <code style="font-size:11px">คำอังกฤษ[Tab]คำแปลไทย[Tab]การออกเสียง[Tab]ประโยค Eng[Tab]ประโยคไทย[Tab]ระดับ</code><br>
+          <code>Polite, สุภาพ</code> &nbsp;คั่นด้วย <b>,</b><br><br>
+          <b>แบบเต็ม</b> (ครบทุกคุณสมบัติ) — คั่นด้วย <b>,</b> ครบ 6 ช่อง โดยช่องสุดท้ายต้องเป็น ม.1–ม.6:<br>
+          <code style="font-size:11px">คำอังกฤษ, คำแปลไทย, การออกเสียง, ประโยค Eng, ประโยคไทย, ระดับ</code><br>
           ตัวอย่าง:<br>
-          <code style="font-size:11px">Grateful[Tab]รู้สึกขอบคุณ[Tab]/ˈɡreɪt.fəl/[Tab]I am grateful for your help.[Tab]ฉันขอบคุณสำหรับความช่วยเหลือ[Tab]ม.3</code><br><br>
-          <span style="color:var(--tx3);font-size:12px">หมวดหมู่ใช้จาก dropdown ด้านล่าง / ช่องว่างใส่ได้แค่ - ไม่ต้องกรอก</span>
+          <code style="font-size:11px">Grateful, รู้สึกขอบคุณ, /ˈɡreɪt.fəl/, I am grateful for your help., ฉันขอบคุณสำหรับความช่วยเหลือ, ม.3</code><br>
+          ถ้าไม่มีการออกเสียงหรือประโยค เว้นว่างช่องนั้นได้:<br>
+          <code style="font-size:11px">give up, ยอมแพ้, , Don't give up!, อย่ายอมแพ้!, ม.3</code><br><br>
+          <span style="color:var(--tx3);font-size:12px">หมวดหมู่ใช้จาก dropdown ด้านล่าง</span>
         </div>
         <div class="form-group">
           <label class="form-label">หมวดหมู่</label>
@@ -922,17 +923,16 @@ function addManual() {
 // parse text
 function parseText(text, cat = 'คำของฉัน') {
   return text.split('\n').map(l => l.trim()).filter(Boolean).reduce((acc, line) => {
-    let en, th, ph = '', ex = '', exth = '', lv = 'ม.1', rest;
-    if (line.includes('\t')) {
-      const parts = line.split('\t').map(s => s.trim());
-      if (parts.length >= 6) {
-        // full format: en [tab] th [tab] ph [tab] ex [tab] exth [tab] lv
-        [en, th, ph, ex, exth, lv] = parts;
-      } else {
-        [en, ...rest] = parts; th = rest.join(' ');
-      }
-    } else if (/\s+-\s+/.test(line)) { [en, th] = line.split(/\s+-\s+/); }
-    else if (line.includes(','))     { [en, ...rest] = line.split(','); th = rest.join(','); }
+    let en, th, ph = '', ex = '', exth = '', lv = 'ม.1';
+    const parts = parseCSVLine(line).map(s => s.trim());
+    if (parts.length >= 6 && ALLOWED_LV.includes(parts[5])) {
+      // full format: en, th, ph, ex, exth, lv  (ตรวจจาก field 6 เป็น ม.x)
+      [en, th, ph, ex, exth, lv] = parts;
+    } else if (/\s+-\s+/.test(line)) {
+      [en, th] = line.split(/\s+-\s+/);
+    } else {
+      en = parts[0]; th = parts.slice(1).join(',');
+    }
     en = en?.trim(); th = th?.trim();
     if (en && th) acc.push({ en, th, ph: ph||'', ex: ex||'', exth: exth||'', lv: ALLOWED_LV.includes(lv) ? lv : 'ม.1', cat });
     return acc;
