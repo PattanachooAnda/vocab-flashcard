@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#ffffff">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>VocabCards ม.ต้น–ม.ปลาย</title>
+<title>Fit with Quiz</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
@@ -233,7 +233,7 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
 <div class="app">
   <div class="topbar">
     <div class="topbar-row">
-      <div class="appname">Vocab<span>Cards</span> ม.ต้น–ม.ปลาย</div>
+      <div class="appname">Fit with <span>Quiz</span></div>
       <div style="display:flex;gap:6px;align-items:center">
         <button class="import-btn" onclick="openHistoryModal()">
           <i class="ti ti-chart-bar"></i> ประวัติ
@@ -458,7 +458,6 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
       <button class="modal-tab active" onclick="switchHistTab('sessions')">รายรอบ</button>
       <button class="modal-tab" onclick="switchHistTab('perword')">รายคำ</button>
       <button class="modal-tab" onclick="switchHistTab('bycat')">หมวดหมู่</button>
-      <button class="modal-tab" onclick="switchHistTab('trend')">แนวโน้ม</button>
     </div>
     <div class="modal-body">
 
@@ -473,6 +472,10 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
         </div>
         <div class="empty-state" id="hist2-empty">ยังไม่มีประวัติการทำแบบทดสอบ</div>
         <div id="hist2-list" style="display:flex;flex-direction:column;gap:10px"></div>
+        <div id="hist2-trend-section" style="display:none;flex-direction:column;gap:6px">
+          <div style="font-size:12px;font-weight:500;color:var(--tx2);padding:2px 0">แนวโน้ม % รู้แล้ว</div>
+          <div id="hist2-trend-chart" class="trend-chart"></div>
+        </div>
         <button class="action-btn danger hidden" id="hist2-clear-btn" onclick="clearHistory2()"><i class="ti ti-trash"></i> ลบประวัติทั้งหมด</button>
       </div>
 
@@ -499,11 +502,6 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
         <div id="bycat-list" style="display:flex;flex-direction:column;gap:10px"></div>
       </div>
 
-      <!-- Sub-tab: Trend -->
-      <div class="tab-panel" id="histtab-trend">
-        <div class="empty-state" id="trend-empty">ต้องมีอย่างน้อย 2 รอบ</div>
-        <div id="trend-chart" class="trend-chart"></div>
-      </div>
 
     </div>
   </div>
@@ -897,7 +895,7 @@ function setSort(view, key) {
   if (view === 'bycat')    refreshByCategory();
 }
 
-const HIST_TAB_IDS = ['sessions','perword','bycat','trend'];
+const HIST_TAB_IDS = ['sessions','perword','bycat'];
 function switchHistTab(name) {
   document.querySelectorAll('#histModalBackdrop .tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('#histModalBackdrop .modal-tab').forEach(b => b.classList.remove('active'));
@@ -906,7 +904,6 @@ function switchHistTab(name) {
   if (name === 'sessions') refreshSessions();
   if (name === 'perword')  refreshPerWord();
   if (name === 'bycat')    refreshByCategory();
-  if (name === 'trend')    refreshTrend();
 }
 
 const TAB_IDS = ['manual','paste','file','manage'];
@@ -1152,6 +1149,37 @@ function refreshSessions() {
       </div>`;
     list.appendChild(d);
   });
+
+  // Inline trend chart — shown when ≥2 sessions
+  const trendSection = document.getElementById('hist2-trend-section');
+  const trendChart = document.getElementById('hist2-trend-chart');
+  trendChart.innerHTML = '';
+  if (sessions.length >= 2) {
+    trendSection.style.display = 'flex';
+    sessions.forEach((s, i) => { s._rn = s.round || (sessions.length - i); });
+    const ordered = [...sessions].reverse(); // oldest first
+    ordered.forEach(s => {
+      const pct = s.total > 0 ? Math.round(s.known.length / s.total * 100) : 0;
+      const item = document.createElement('div');
+      item.className = 'trend-item';
+      item.style.alignItems = 'flex-start';
+      item.innerHTML =
+        `<div class="trend-dot" style="margin-top:4px"></div>
+         <div style="min-width:96px">
+           <div style="font-size:12px;font-weight:600;color:var(--tx)">ครั้งที่ ${s._rn}</div>
+           <div style="font-size:10px;color:var(--tx3);line-height:1.5">${formatDate(s.date)}</div>
+         </div>
+         <div class="trend-bar-wrap" style="margin-top:6px">
+           <div class="trend-bar-fill" style="width:${pct}%">
+             ${pct >= 15 ? `<span class="trend-bar-pct">${pct}%</span>` : ''}
+           </div>
+         </div>
+         ${pct < 15 ? `<span style="font-size:10px;color:var(--tx3);min-width:28px;margin-top:6px">${pct}%</span>` : ''}`;
+      trendChart.appendChild(item);
+    });
+  } else {
+    trendSection.style.display = 'none';
+  }
 }
 function refreshPerWord() {
   const sessions = loadHistory();
