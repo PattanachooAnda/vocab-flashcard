@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Fit with Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<!-- Firebase SDK (Realtime Database) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<style>
+:root {
+  --bg: #ffffff; --bg2: #f8f9fa; --bg3: #f3f4f6;
+  --bg-info: #eff6ff; --bg-ok: #f0fdf4; --bg-err: #fef2f2;
+  --tx: #111827; --tx2: #6b7280; --tx3: #9ca3af;
+  --tx-info: #2563eb; --tx-ok: #16a34a; --tx-err: #dc2626;
+  --bd: #e5e7eb; --bd2: #f3f4f6;
+  --bd-info: #bfdbfe; --bd-ok: #bbf7d0; --bd-err: #fecaca;
+  --r: 10px; --rl: 16px;
+}
+*,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%;overflow-x:hidden}
+body{font-family:'Sarabun',sans-serif;background:var(--bg3)}
+
+.app{min-height:100dvh;display:flex;flex-direction:column;align-items:center}
+
+/* topbar */
+.topbar{width:100%;background:var(--bg);border-bottom:.5px solid var(--bd2);padding:12px 16px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;position:sticky;top:0;z-index:20}
+.topbar-row{width:100%;display:flex;align-items:center;justify-content:space-between}
+.appname{font-size:17px;font-weight:500;color:var(--tx);letter-spacing:.2px}
+.appname span{color:var(--tx-info)}
+.import-btn{display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:var(--r);border:.5px solid var(--bd);background:var(--bg2);color:var(--tx2);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.import-btn:active{transform:scale(.97)}
+.cats{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;width:100%}
+.cat-btn{font-family:'Sarabun',sans-serif;font-size:12px;padding:5px 12px;border-radius:99px;border:.5px solid var(--bd);background:var(--bg2);color:var(--tx2);cursor:pointer;transition:all .15s;white-space:nowrap}
+.cat-btn.active{background:var(--bg-info);color:var(--tx-info);border-color:var(--bd-info);font-weight:500}
+
+/* progress */
+.prog-wrap{width:100%;max-width:500px;padding:10px 16px 0;display:flex;flex-direction:column;gap:4px}
+.prog-row{display:flex;justify-content:space-between;align-items:center}
+.prog-label{font-size:12px;color:var(--tx2)}
+.prog-bar{width:100%;height:4px;background:var(--bd2);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;background:var(--tx-info);border-radius:99px;transition:width .35s ease}
+
+/* card area */
+.card-area{width:100%;max-width:500px;padding:12px 16px;flex:1;display:flex;flex-direction:column;gap:10px}
+
+/* card */
+.card-wrap{width:100%;position:relative;overflow:visible}
+.card-drag{width:100%;position:relative;perspective:900px;will-change:transform}
+.card-inner{width:100%;height:250px;position:relative;transform-style:preserve-3d;-webkit-transform-style:preserve-3d;transition:transform .45s cubic-bezier(.4,0,.2,1);cursor:pointer}
+.card-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:var(--rl);border:.5px solid var(--bd2);background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px;overflow:hidden}
+.card-back{transform:rotateY(180deg);background:var(--bg2)}
+.card-inner.flipped{transform:rotateY(180deg)}
+.card-tag{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--tx3);margin-bottom:10px;font-weight:400}
+.card-en{font-size:2.1rem;font-weight:700;color:var(--tx);text-align:center;line-height:1.1;margin:0 0 5px}
+.card-ph{font-size:13px;color:var(--tx3);margin:0 0 12px;font-weight:300}
+.card-level{font-size:11px;padding:3px 10px;border-radius:99px;border:.5px solid var(--bd);color:var(--tx2);background:var(--bg2)}
+.card-hint{font-size:12px;color:var(--tx3);margin-top:14px;display:flex;align-items:center;gap:4px}
+.card-th{font-size:1.6rem;font-weight:700;color:var(--tx-info);text-align:center;line-height:1.2;margin:0 0 8px}
+.card-ex{font-size:13px;color:var(--tx2);text-align:center;line-height:1.6;font-style:italic;font-weight:300;max-width:280px}
+.card-ex-th{font-size:12px;color:var(--tx3);text-align:center;line-height:1.5;margin-top:5px;font-weight:300}
+
+/* swipe labels */
+.swipe-label{position:absolute;top:50%;transform:translateY(-50%);font-size:18px;font-weight:700;padding:8px 14px;border-radius:var(--r);opacity:0;pointer-events:none;z-index:5;white-space:nowrap;border-width:2px;border-style:solid}
+.swipe-know{right:12px;color:var(--tx-ok);border-color:var(--tx-ok);background:var(--bg-ok)}
+.swipe-dontknow{left:12px;color:var(--tx-err);border-color:var(--tx-err);background:var(--bg-err)}
+/* hist */
+.hist-session{background:var(--bg2);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:6px;border:.5px solid var(--bd2)}
+.hist-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hist-date{font-size:11px;color:var(--tx3);flex:1}
+.hist-badge{font-size:11px;color:var(--tx-info);background:var(--bg-info);padding:2px 8px;border-radius:99px;border:.5px solid var(--bd-info);white-space:nowrap}
+.hist-score{font-size:13px;color:var(--tx)}
+.hist-words{font-size:12px;color:var(--tx2);line-height:1.7;word-break:break-word}
+.hist-ok{color:var(--tx-ok);font-weight:500} .hist-err{color:var(--tx-err);font-weight:500}
+
+/* swipe hint bar (mobile) */
+.swipe-hint{display:none;align-items:center;justify-content:center;gap:12px;font-size:12px;color:var(--tx3);padding:4px 0}
+.hint-l{color:var(--tx-err)} .hint-r{color:var(--tx-ok)}
+
+/* buttons */
+.reveal-btn{width:100%;padding:14px;border-radius:var(--rl);border:.5px solid var(--bd-info);background:var(--bg-info);color:var(--tx-info);font-family:'Sarabun',sans-serif;font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s}
+.reveal-btn:active{transform:scale(.98)}
+.result-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.res-btn{padding:14px;border-radius:var(--rl);border:.5px solid var(--bd);font-family:'Sarabun',sans-serif;font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
+.res-btn:active{transform:scale(.97)}
+.btn-know{background:var(--bg-ok);color:var(--tx-ok);border-color:var(--bd-ok)}
+.btn-dontknow{background:var(--bg-err);color:var(--tx-err);border-color:var(--bd-err)}
+.btn-know-active{outline:2.5px solid var(--tx-ok);outline-offset:2px}
+.btn-dontknow-active{outline:2.5px solid var(--tx-err);outline-offset:2px}
+
+/* Card status badge */
+.card-status-badge{position:absolute;top:10px;right:10px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:99px;z-index:10;pointer-events:none;letter-spacing:.3px;border-width:.5px;border-style:solid}
+.badge-known{background:var(--bg-ok);color:var(--tx-ok);border-color:var(--bd-ok)}
+.badge-notKnown{background:var(--bg-err);color:var(--tx-err);border-color:var(--bd-err)}
+
+/* Expandable session table */
+.hist-session-header{cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px}
+.hist-expand-icon{font-size:12px;color:var(--tx3);transition:transform .2s}
+.hist-session.expanded .hist-expand-icon{transform:rotate(90deg)}
+.hist-table-wrap{display:none;margin-top:8px;overflow-x:auto}
+.hist-session.expanded .hist-table-wrap{display:block}
+.hist-table{width:100%;border-collapse:collapse;font-size:12px}
+.hist-table th{text-align:left;padding:5px 6px;color:var(--tx3);font-weight:400;border-bottom:.5px solid var(--bd2)}
+.hist-table td{padding:5px 6px;color:var(--tx2);border-bottom:.5px solid var(--bd2);vertical-align:top}
+.hist-table tr:last-child td{border-bottom:none}
+.td-status-known{color:var(--tx-ok);font-weight:500}
+.td-status-notKnown{color:var(--tx-err);font-weight:500}
+
+/* Per-word stat bar */
+.word-stat-item{background:var(--bg2);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:5px;border:.5px solid var(--bd2)}
+.word-stat-label{font-size:13px;font-weight:500;color:var(--tx)}
+.word-stat-meaning{font-size:12px;color:var(--tx2)}
+.word-stat-counts{font-size:11px;color:var(--tx3)}
+.word-stat-bar{width:100%;height:8px;border-radius:99px;overflow:hidden;background:var(--bd2);display:flex}
+.bar-known{height:100%;background:var(--tx-ok);transition:width .4s ease}
+.bar-notknown{height:100%;background:var(--tx-err);transition:width .4s ease}
+
+/* Trend chart */
+.trend-chart{display:flex;flex-direction:column;gap:8px;padding:4px 0}
+.trend-item{display:flex;align-items:center;gap:8px}
+.trend-date{font-size:11px;color:var(--tx3);min-width:80px}
+.trend-bar-wrap{flex:1;height:20px;background:var(--bd2);border-radius:99px;overflow:hidden}
+.trend-bar-fill{height:100%;background:var(--tx-info);border-radius:99px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;transition:width .4s ease}
+.trend-bar-pct{font-size:10px;font-weight:600;color:#fff;white-space:nowrap}
+.trend-dot{width:8px;height:8px;border-radius:50%;background:var(--tx-info);border:2px solid var(--bg);flex-shrink:0}
+
+.nav-row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
+.nav-btn{padding:11px;border-radius:var(--r);border:.5px solid var(--bd);background:var(--bg2);color:var(--tx2);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .15s}
+.nav-btn:active{transform:scale(.97)}
+.shuffle-btn{padding:11px 14px;border-radius:var(--r);border:.5px solid var(--bd);background:var(--bg2);color:var(--tx3);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.shuffle-btn:active{transform:scale(.97)}
+
+/* stats */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat-box{background:var(--bg2);border-radius:var(--r);padding:10px 8px;text-align:center}
+.stat-num{font-size:20px;font-weight:500;display:block;color:var(--tx)}
+.stat-num.s{color:var(--tx-ok)} .stat-num.d{color:var(--tx-err)}
+.stat-lbl{font-size:11px;color:var(--tx3)}
+
+/* done */
+.done-box{width:100%;background:var(--bg);border:.5px solid var(--bd2);border-radius:var(--rl);padding:28px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
+.done-title{font-size:22px;font-weight:700;color:var(--tx)}
+.done-sub{font-size:14px;color:var(--tx2);line-height:1.6}
+.done-restart{padding:13px 24px;border-radius:var(--rl);border:.5px solid var(--bd-info);background:var(--bg-info);color:var(--tx-info);font-family:'Sarabun',sans-serif;font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s}
+.done-restart:active{transform:scale(.97)}
+
+/* modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.modal-backdrop.open{opacity:1;pointer-events:all}
+.modal{width:100%;max-width:560px;background:var(--bg);border-radius:20px 20px 0 0;max-height:90dvh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.modal-backdrop.open .modal{transform:translateY(0)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:.5px solid var(--bd2);flex-shrink:0}
+.modal-title{font-size:16px;font-weight:500;color:var(--tx)}
+.modal-close{width:32px;height:32px;border-radius:50%;border:none;background:var(--bg2);color:var(--tx2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px}
+.modal-tabs{display:flex;border-bottom:.5px solid var(--bd2);flex-shrink:0;overflow-x:auto}
+.modal-tab{flex:1;min-width:0;padding:10px 6px;font-family:'Sarabun',sans-serif;font-size:13px;border:none;background:none;color:var(--tx2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+.modal-tab.active{color:var(--tx-info);border-bottom-color:var(--tx-info);font-weight:500}
+.modal-body{overflow-y:auto;flex:1;padding:16px 20px;display:flex;flex-direction:column;gap:12px}
+.tab-panel{display:none;flex-direction:column;gap:12px}
+.tab-panel.active{display:flex}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:13px;color:var(--tx2)}
+.form-input{font-family:'Sarabun',sans-serif;font-size:15px;padding:10px 12px;border-radius:var(--r);border:.5px solid var(--bd);background:var(--bg);color:var(--tx);outline:none;transition:border-color .15s;width:100%}
+.form-input:focus{border-color:var(--tx-info)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-hint{font-size:12px;color:var(--tx3);line-height:1.7}
+textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
+.action-btn{width:100%;padding:13px;border-radius:var(--rl);border:.5px solid var(--bd-info);background:var(--bg-info);color:var(--tx-info);font-family:'Sarabun',sans-serif;font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s}
+.action-btn:active{transform:scale(.98)}
+.action-btn.danger{border-color:var(--bd-err);background:var(--bg-err);color:var(--tx-err)}
+.result-msg{font-size:13px;padding:8px 12px;border-radius:var(--r);display:none}
+.file-zone{border:2px dashed var(--bd);border-radius:var(--rl);padding:24px 20px;text-align:center;cursor:pointer;transition:border-color .15s}
+.file-zone:hover{border-color:var(--tx-info)}
+.file-zone input{display:none}
+.custom-list{display:flex;flex-direction:column;gap:6px}
+.custom-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg2);border-radius:var(--r);gap:8px}
+.custom-item-text{flex:1;min-width:0}
+.ci-en{font-size:14px;font-weight:500;color:var(--tx)}
+.ci-th{font-size:12px;color:var(--tx2)}
+.ci-del{width:30px;height:30px;border-radius:50%;border:none;background:var(--bg-err);color:var(--tx-err);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ci-pub{padding:0 10px;height:28px;border-radius:var(--r);border:.5px solid var(--bd-info);background:var(--bg-info);color:var(--tx-info);font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.section-lbl{font-size:12px;color:var(--tx2);font-weight:500;padding:3px 0;display:flex;align-items:center;gap:6px}
+.section-lbl::after{content:'';flex:1;height:.5px;background:var(--bd)}
+.shared-item{display:flex;align-items:center;padding:8px 12px;background:var(--bg-info);border-radius:var(--r);gap:8px;border:.5px solid var(--bd-info)}
+.empty-state{font-size:14px;color:var(--tx3);text-align:center;padding:20px 0}
+
+/* sort controls */
+.sort-bar{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:2px 0}
+.sort-lbl{font-size:11px;color:var(--tx3);white-space:nowrap;flex-shrink:0}
+.sort-btn{font-size:11px;padding:4px 10px;border-radius:99px;border:.5px solid var(--bd);background:var(--bg2);color:var(--tx2);cursor:pointer;font-family:'Sarabun',sans-serif;white-space:nowrap;transition:all .15s}
+.sort-btn.active{background:var(--bg-info);color:var(--tx-info);border-color:var(--bd-info);font-weight:500}
+
+/* cross-nav */
+.nav-link{font-size:11px;color:var(--tx-info);cursor:pointer;background:none;border:none;padding:0;font-family:'Sarabun',sans-serif;text-decoration:underline;text-underline-offset:2px;flex-shrink:0;line-height:1}
+.word-cat-chip{font-size:10px;padding:2px 7px;border-radius:99px;background:var(--bg-info);color:var(--tx-info);border:.5px solid var(--bd-info);cursor:pointer;white-space:nowrap;font-family:'Sarabun',sans-serif;line-height:1.4}
+.word-stat-item.focused{outline:2px solid var(--tx-info);outline-offset:3px}
+
+/* Mode switch */
+.mode-switch{display:flex;gap:6px;justify-content:center;width:100%}
+.mode-btn{font-family:'Sarabun',sans-serif;font-size:12px;padding:5px 14px;border-radius:99px;border:.5px solid var(--bd);background:var(--bg2);color:var(--tx2);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.mode-btn.active{background:var(--bg-info);color:var(--tx-info);border-color:var(--bd-info);font-weight:500}
+
+/* Math card */
+.math-card{width:100%;background:var(--bg);border-radius:var(--rl);border:.5px solid var(--bd2);padding:24px 20px;display:flex;flex-direction:column;gap:10px;min-height:160px}
+.math-topic-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.math-topic{font-size:11px;padding:3px 10px;border-radius:99px;background:var(--bg-info);color:var(--tx-info);border:.5px solid var(--bd-info)}
+.math-level{font-size:11px;padding:3px 10px;border-radius:99px;border:.5px solid var(--bd);color:var(--tx2);background:var(--bg2)}
+.math-qnum{font-size:11px;color:var(--tx3);margin-left:auto}
+.math-question{font-size:1.2rem;font-weight:600;color:var(--tx);line-height:1.65;text-align:center;padding:8px 0}
+
+/* Choice buttons */
+.math-choices{display:flex;flex-direction:column;gap:8px}
+.math-choice-btn{width:100%;padding:13px 16px;border-radius:var(--r);border:.5px solid var(--bd);background:var(--bg);color:var(--tx);font-family:'Sarabun',sans-serif;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .15s;text-align:left}
+.math-choice-btn:hover:not([disabled]){background:var(--bg2);border-color:var(--tx-info)}
+.math-choice-btn:active:not([disabled]){transform:scale(.98)}
+.math-choice-btn[disabled]{cursor:default}
+.choice-label{width:26px;height:26px;border-radius:50%;background:var(--bg2);border:.5px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--tx2);flex-shrink:0}
+.choice-text{flex:1;line-height:1.4}
+.choice-correct{background:var(--bg-ok)!important;border-color:var(--bd-ok)!important;color:var(--tx-ok)!important}
+.choice-correct .choice-label{background:var(--tx-ok);color:#fff;border-color:var(--tx-ok)}
+.choice-wrong{background:var(--bg-err)!important;border-color:var(--bd-err)!important;color:var(--tx-err)!important}
+.choice-wrong .choice-label{background:var(--tx-err);color:#fff;border-color:var(--tx-err)}
+
+/* Math explanation */
+.math-explain{background:var(--bg2);border-radius:var(--r);padding:12px 14px;border:.5px solid var(--bd2);display:flex;flex-direction:column;gap:6px}
+.answer-result{font-size:14px;font-weight:600;line-height:1.5}
+.result-correct{color:var(--tx-ok)}
+.result-wrong{color:var(--tx-err)}
+.explain-label{font-size:11px;color:var(--tx3);letter-spacing:.5px;font-weight:500}
+.explain-text{font-size:13px;color:var(--tx2);line-height:1.7}
+
+/* utils */
+.hidden{display:none!important}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+
+/* desktop */
+@media(min-width:600px){
+  .modal{border-radius:20px;max-height:80vh}
+  .modal-backdrop{align-items:center}
+}
+
+/* mobile */
+@media(max-width:599px){
+
+  .topbar{padding:10px 14px 8px}
+  .card-area{padding:10px 12px;gap:8px}
+  .card-face{padding:20px 16px}
+  .card-en{font-size:1.9rem}
+  .card-th{font-size:1.45rem}
+  .card-inner{height:240px}
+  .res-btn{padding:15px 8px}
+  .swipe-hint{display:flex}
+  .cat-btn{font-size:11px;padding:4px 10px}
+}
+</style>
+</head>
+<body>
+<h2 class="sr-only">คลังคำศัพท์ภาษาอังกฤษระดับ ม.1–ม.6 แบบ flashcard พร้อมคำแปลภาษาไทย</h2>
+
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-row">
+      <div class="appname">Fit with <span>Quiz</span></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="import-btn" onclick="openHistoryModal()">
+          <i class="ti ti-chart-bar"></i> ประวัติ
+        </button>
+        <button class="import-btn" onclick="openImport()">
+          <i class="ti ti-plus"></i> เพิ่มคำศัพท์
+        </button>
+      </div>
+    </div>
+    <div class="mode-switch">
+      <button class="mode-btn active" id="modeVocab" onclick="setMode('vocab')"><i class="ti ti-language"></i> ศัพท์อังกฤษ</button>
+      <button class="mode-btn" id="modeMath" onclick="setMode('math')"><i class="ti ti-math-function"></i> คณิตศาสตร์</button>
+    </div>
+    <div class="cats" id="cats"></div>
+  </div>
+
+  <div class="prog-wrap">
+    <div class="prog-row">
+      <span class="prog-label" id="progLabel">1 / 30</span>
+      <span class="prog-label" id="progPct">0%</span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+  </div>
+
+  <div class="card-area" id="vocabArea">
+    <div class="card-wrap" id="cardWrap">
+      <div class="card-drag" id="cardDrag">
+        <div class="card-inner" id="cardInner" onclick="handleCardTap()">
+          <div class="card-face" id="cardFront">
+            <div class="card-tag">คำศัพท์ภาษาอังกฤษ</div>
+            <div class="card-en" id="cEn">—</div>
+            <div class="card-ph" id="cPh"></div>
+            <div class="card-level" id="cLv"></div>
+            <div class="card-hint"><i class="ti ti-hand-click" style="font-size:14px"></i> แตะการ์ดเพื่อดูความหมาย</div>
+          </div>
+          <div class="card-face card-back" id="cardBack">
+            <div class="card-tag">คำแปลภาษาไทย</div>
+            <div class="card-th" id="cTh">—</div>
+            <div class="card-ex" id="cEx"></div>
+            <div class="card-ex-th" id="cExTh"></div>
+          </div>
+        </div>
+        <div class="swipe-label swipe-know" id="lblKnow"><i class="ti ti-check"></i> รู้แล้ว!</div>
+        <div class="swipe-label swipe-dontknow" id="lblDont"><i class="ti ti-x"></i> ยังไม่รู้</div>
+      </div>
+      <div class="card-status-badge hidden" id="cardStatusBadge"></div>
+    </div>
+
+    <div class="swipe-hint" id="swipeHint">
+      <span class="hint-l">← ยังไม่รู้</span>
+      <span style="color:var(--bd)">|</span>
+      <span class="hint-r">รู้แล้ว →</span>
+    </div>
+
+    <button class="reveal-btn" id="revealBtn" onclick="flip()">
+      <i class="ti ti-eye" style="font-size:17px"></i> ดูความหมาย
+    </button>
+
+    <div class="result-row hidden" id="resultRow">
+      <button class="res-btn btn-dontknow" id="btnDontKnow" onclick="mark(false)"><i class="ti ti-x"></i> ยังไม่รู้</button>
+      <button class="res-btn btn-know" id="btnKnow" onclick="mark(true)"><i class="ti ti-check"></i> รู้แล้ว!</button>
+    </div>
+
+    <div class="nav-row">
+      <button class="nav-btn" onclick="go(-1)"><i class="ti ti-arrow-left"></i> ก่อนหน้า</button>
+      <button class="shuffle-btn" onclick="shuffleAll()" title="สุ่มใหม่" aria-label="สุ่มใหม่"><i class="ti ti-arrows-shuffle" style="font-size:18px"></i></button>
+      <button class="nav-btn" onclick="go(1)">ถัดไป <i class="ti ti-arrow-right"></i></button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box"><span class="stat-num s" id="stK">0</span><span class="stat-lbl">รู้แล้ว</span></div>
+      <div class="stat-box"><span class="stat-num d" id="stD">0</span><span class="stat-lbl">ยังไม่รู้</span></div>
+      <div class="stat-box"><span class="stat-num" id="stL">0</span><span class="stat-lbl">เหลือ</span></div>
+    </div>
+
+    <div class="done-box hidden" id="doneBox">
+      <div class="done-title">เสร็จแล้ว!</div>
+      <div class="done-sub" id="doneSub"></div>
+      <button class="done-restart" onclick="restart()"><i class="ti ti-refresh"></i> เริ่มใหม่</button>
+      <button class="done-restart" style="background:var(--bg2);color:var(--tx2);border-color:var(--bd)" onclick="openHistoryModal()"><i class="ti ti-chart-bar"></i> ดูประวัติ</button>
+    </div>
+  </div>
+
+  <!-- Math Quiz Area -->
+  <div class="card-area hidden" id="mathArea">
+    <div class="math-card" id="mathCard">
+      <div class="math-topic-row">
+        <span class="math-topic" id="mTopic"></span>
+        <span class="math-level" id="mLevel"></span>
+        <span class="math-qnum" id="mQNum"></span>
+      </div>
+      <div class="math-question" id="mQuestion"></div>
+    </div>
+
+    <div class="math-choices" id="mathChoices"></div>
+
+    <div class="math-explain hidden" id="mathExplain">
+      <div class="answer-result" id="mAnswerResult"></div>
+      <div class="explain-label">วิธีคิด</div>
+      <div class="explain-text" id="mExplain"></div>
+    </div>
+
+    <button class="reveal-btn hidden" id="mathNextBtn" onclick="mathNext()">
+      <i class="ti ti-arrow-right" style="font-size:17px"></i> ข้อถัดไป
+    </button>
+
+    <div class="nav-row">
+      <button class="nav-btn" onclick="mathGo(-1)"><i class="ti ti-arrow-left"></i> ก่อนหน้า</button>
+      <button class="shuffle-btn" onclick="mathShuffle()" title="สุ่มใหม่" aria-label="สุ่มใหม่"><i class="ti ti-arrows-shuffle" style="font-size:18px"></i></button>
+      <button class="nav-btn" onclick="mathGo(1)">ถัดไป <i class="ti ti-arrow-right"></i></button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box"><span class="stat-num s" id="mStK">0</span><span class="stat-lbl">ถูก</span></div>
+      <div class="stat-box"><span class="stat-num d" id="mStD">0</span><span class="stat-lbl">ผิด</span></div>
+      <div class="stat-box"><span class="stat-num" id="mStL">0</span><span class="stat-lbl">เหลือ</span></div>
+    </div>
+
+    <div class="done-box hidden" id="mathDoneBox">
+      <div class="done-title">เสร็จแล้ว!</div>
+      <div class="done-sub" id="mathDoneSub"></div>
+      <button class="done-restart" onclick="mathRestart()"><i class="ti ti-refresh"></i> เริ่มใหม่</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal-backdrop" id="modalBackdrop" onclick="handleBackdropClick(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">เพิ่มคำศัพท์</div>
+      <button class="modal-close" onclick="closeImport()"><i class="ti ti-x" style="font-size:14px"></i></button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchTab('manual')">พิมพ์เอง</button>
+      <button class="modal-tab" onclick="switchTab('paste')">วางข้อความ</button>
+      <button class="modal-tab" onclick="switchTab('file')">ไฟล์ CSV/TXT</button>
+      <button class="modal-tab" onclick="switchTab('manage')">จัดการ</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Tab: Manual -->
+      <div class="tab-panel active" id="tab-manual">
+        <div class="form-hint">
+          <b>คุณสมบัติแต่ละช่อง</b><br>
+          <b>คำอังกฤษ *</b> — คำหรือวลีที่ต้องการฝึก เช่น <code>Grateful</code>, <code>give up</code><br>
+          <b>คำแปลไทย *</b> — ความหมายภาษาไทย เช่น <code>รู้สึกขอบคุณ</code><br>
+          <b>การออกเสียง</b> — สัญลักษณ์ IPA เช่น <code>/ˈɡreɪt.fəl/</code> (ไม่บังคับ)<br>
+          <b>ระดับชั้น</b> — ม.1–ม.6 ตามความยากของคำ<br>
+          <b>หมวดหมู่</b> — กลุ่มที่จะใช้กรองการ์ด เช่น คำศัพท์ทั่วไป, Idioms<br>
+          <b>ประโยคตัวอย่าง (Eng)</b> — ประโยคที่ใช้คำนั้น เช่น <code>I am grateful for your help.</code> (ไม่บังคับ)<br>
+          <b>แปลประโยค (ไทย)</b> — คำแปลของประโยค เช่น <code>ฉันขอบคุณสำหรับความช่วยเหลือ</code> (ไม่บังคับ)
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">คำภาษาอังกฤษ *</label>
+            <input class="form-input" id="inp-en" placeholder="เช่น Grateful" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label">คำแปลภาษาไทย *</label>
+            <input class="form-input" id="inp-th" placeholder="เช่น รู้สึกขอบคุณ" autocomplete="off">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">การออกเสียง <span style="font-weight:400;color:var(--tx3)">(ไม่บังคับ)</span></label>
+            <input class="form-input" id="inp-ph" placeholder="/ˈɡreɪt.fəl/" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label">ระดับชั้น</label>
+            <select class="form-input" id="inp-lv">
+              <option>ม.1</option><option>ม.2</option><option>ม.3</option>
+              <option>ม.4</option><option>ม.5</option><option>ม.6</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">ประเภทคำ <span style="font-weight:400;color:var(--tx3)">(ไม่บังคับ)</span></label>
+            <select class="form-input" id="inp-wt">
+              <option value="">— ไม่ระบุ —</option>
+              <option value="n.">n. (คำนาม)</option>
+              <option value="v.">v. (คำกริยา)</option>
+              <option value="adj.">adj. (คำคุณศัพท์)</option>
+              <option value="adv.">adv. (คำวิเศษณ์)</option>
+              <option value="phrasal v.">phrasal v. (Phrasal Verb)</option>
+              <option value="phrase">phrase (สำนวน/Idiom)</option>
+              <option value="irreg. v.">irreg. v. (กริยาไม่สม่ำเสมอ)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">หมวดหมู่</label>
+            <select class="form-input" id="inp-cat">
+              <option value="คำของฉัน">คำของฉัน</option>
+              <option value="คำศัพท์ทั่วไป">คำศัพท์ทั่วไป</option>
+              <option value="Phrasal Verbs">Phrasal Verbs</option>
+              <option value="Idioms">Idioms</option>
+              <option value="Verb Forms">Verb Forms</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ประโยคตัวอย่าง (English) <span style="font-weight:400;color:var(--tx3)">(ไม่บังคับ)</span></label>
+          <input class="form-input" id="inp-ex" placeholder='เช่น I am grateful for your help.' autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">แปลประโยค (ภาษาไทย) <span style="font-weight:400;color:var(--tx3)">(ไม่บังคับ)</span></label>
+          <input class="form-input" id="inp-exth" placeholder="เช่น ฉันขอบคุณสำหรับความช่วยเหลือ" autocomplete="off">
+        </div>
+        <button class="action-btn" onclick="addManual()"><i class="ti ti-plus"></i> เพิ่มคำศัพท์</button>
+        <div class="result-msg" id="manual-msg"></div>
+      </div>
+
+      <!-- Tab: Paste -->
+      <div class="tab-panel" id="tab-paste">
+        <div class="form-hint">
+          <b>วิธีวางข้อความ</b> — 1 คำต่อ 1 บรรทัด แล้วกด <b>นำเข้าคำศัพท์</b><br><br>
+          <b>แบบย่อ</b> (ได้แค่คำ + คำแปล) เลือกรูปแบบใดก็ได้:<br>
+          <code>Absent - ขาด / ไม่อยู่</code> &nbsp;คั่นด้วย <b> - </b><br>
+          <code>Polite, สุภาพ</code> &nbsp;คั่นด้วย <b>,</b><br><br>
+          <b>แบบเต็ม</b> (ครบทุกคุณสมบัติ) — คั่นด้วย <b>,</b> ช่องที่ 6 ต้องเป็น ม.1–ม.6:<br>
+          <code style="font-size:11px">คำอังกฤษ, คำแปลไทย, การออกเสียง, ประโยค Eng, ประโยคไทย, ระดับ, ประเภทคำ</code><br>
+          ตัวอย่าง:<br>
+          <code style="font-size:11px">Grateful, รู้สึกขอบคุณ, /ˈɡreɪt.fəl/, I am grateful for your help., ฉันขอบคุณสำหรับความช่วยเหลือ, ม.3, adj.</code><br>
+          ถ้าไม่มีบางช่อง เว้นว่างได้:<br>
+          <code style="font-size:11px">give up, ยอมแพ้, , Don't give up!, อย่ายอมแพ้!, ม.3, phrasal v.</code><br><br>
+          <span style="color:var(--tx3);font-size:12px">หมวดหมู่ใช้จาก dropdown ด้านล่าง</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">หมวดหมู่</label>
+          <select class="form-input" id="paste-cat">
+            <option value="คำของฉัน">คำของฉัน</option>
+            <option value="คำศัพท์ทั่วไป">คำศัพท์ทั่วไป</option>
+            <option value="Phrasal Verbs">Phrasal Verbs</option>
+            <option value="Idioms">Idioms</option>
+            <option value="Verb Forms">Verb Forms</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">วางข้อความที่นี่</label>
+          <textarea class="form-input" id="inp-paste" placeholder="Absent - ขาด / ไม่อยู่&#10;Polite - สุภาพ&#10;Curious, อยากรู้อยากเห็น"></textarea>
+        </div>
+        <div class="result-msg" id="paste-msg"></div>
+        <button class="action-btn" onclick="importPaste()"><i class="ti ti-download"></i> นำเข้าคำศัพท์</button>
+      </div>
+
+      <!-- Tab: File -->
+      <div class="tab-panel" id="tab-file">
+        <div class="form-hint">
+          <b>วิธีนำเข้าจากไฟล์</b><br>
+          <span style="color:var(--tx2)">① เตรียมไฟล์</span> .txt หรือ .csv (ดูรูปแบบด้านล่าง)<br>
+          <span style="color:var(--tx2)">② เลือกหมวดหมู่</span> ที่ต้องการจาก dropdown<br>
+          <span style="color:var(--tx2)">③ แตะ "เลือกไฟล์"</span> แล้วเลือกไฟล์จาก Files / Downloads<br>
+          <span style="color:var(--tx2)">④ ตรวจสอบ</span> จำนวนคำ แล้วกด <b>นำเข้าคำศัพท์</b><br><br>
+          <b>ไฟล์ .txt</b> — รูปแบบเดียวกับแท็บ "วางข้อความ" (ดูรายละเอียดที่นั่น)<br><br>
+          <b>ไฟล์ .csv</b> — คั่นด้วย comma, 1 บรรทัดต่อ 1 คำ (ใส่ header หรือไม่ก็ได้)<br>
+          ลำดับคอลัมน์:<br>
+          &nbsp;<b>1. คำอังกฤษ *</b> — เช่น <code>Grateful</code><br>
+          &nbsp;<b>2. คำแปลไทย *</b> — เช่น <code>รู้สึกขอบคุณ</code><br>
+          &nbsp;<b>3. การออกเสียง</b> — เช่น <code>/ˈɡreɪt.fəl/</code> (เว้นว่างได้)<br>
+          &nbsp;<b>4. ประโยคตัวอย่าง (Eng)</b> — (เว้นว่างได้)<br>
+          &nbsp;<b>5. แปลประโยค (ไทย)</b> — (เว้นว่างได้)<br>
+          &nbsp;<b>6. ระดับชั้น</b> — ม.1–ม.6 (เว้นว่าง = ม.1)<br>
+          &nbsp;<b>7. ประเภทคำ</b> — n. / v. / adj. / adv. / phrasal v. / phrase / irreg. v. (เว้นว่างได้)<br>
+          ตัวอย่างบรรทัด:<br>
+          <code style="font-size:11px">Grateful,รู้สึกขอบคุณ,/ˈɡreɪt.fəl/,I am grateful for your help.,ฉันขอบคุณสำหรับความช่วยเหลือ,ม.3,adj.</code><br>
+          <span style="color:var(--tx3);font-size:12px">หมวดหมู่ใช้จาก dropdown ด้านล่าง (ไม่มีคอลัมน์ cat ใน CSV)</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">หมวดหมู่</label>
+          <select class="form-input" id="file-cat">
+            <option value="คำของฉัน">คำของฉัน</option>
+            <option value="คำศัพท์ทั่วไป">คำศัพท์ทั่วไป</option>
+            <option value="Phrasal Verbs">Phrasal Verbs</option>
+            <option value="Idioms">Idioms</option>
+            <option value="Verb Forms">Verb Forms</option>
+          </select>
+        </div>
+        <div class="file-zone" onclick="document.getElementById('fileInput').click()">
+          <i class="ti ti-file-upload" style="font-size:36px;color:var(--tx3)"></i>
+          <div style="font-size:14px;color:var(--tx2);margin-top:8px">แตะเพื่อเลือกไฟล์</div>
+          <div style="font-size:12px;color:var(--tx3);margin-top:4px">.txt หรือ .csv</div>
+          <input type="file" id="fileInput" accept=".txt,.csv,text/plain,text/csv" onchange="handleFileUpload(event)">
+        </div>
+        <div class="result-msg" id="file-msg"></div>
+        <button class="action-btn hidden" id="file-import-btn" onclick="importFileData()"><i class="ti ti-download"></i> นำเข้าคำศัพท์</button>
+      </div>
+
+      <!-- Tab: Manage -->
+      <div class="tab-panel" id="tab-manage">
+        <div class="section-lbl"><i class="ti ti-world" style="font-size:13px;color:var(--tx-info)"></i> คลังกลาง <span style="font-size:11px;font-weight:400;color:var(--tx3)">(ทุกคนเห็น)</span></div>
+        <div id="shared-status" style="font-size:12px;color:var(--tx3);display:none;padding:4px 0"></div>
+        <div class="empty-state" id="shared-empty" style="font-size:13px;padding:10px 0">ยังไม่มีคำในคลังกลาง</div>
+        <div class="custom-list" id="shared-list"></div>
+        <div class="section-lbl" style="margin-top:4px"><i class="ti ti-device-mobile" style="font-size:13px"></i> คำร่างของฉัน <span style="font-size:11px;font-weight:400;color:var(--tx3)">(เฉพาะเครื่องนี้)</span></div>
+        <div class="empty-state" id="custom-empty">ยังไม่มีคำที่เตรียมไว้</div>
+        <div class="custom-list" id="custom-list"></div>
+        <button class="action-btn danger hidden" id="clear-btn" onclick="clearAllCustom()"><i class="ti ti-trash"></i> ลบคำร่างทั้งหมด</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- History Modal -->
+<div class="modal-backdrop" id="histModalBackdrop" onclick="handleHistBackdropClick(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">ประวัติการทำแบบทดสอบ</div>
+      <button class="modal-close" onclick="closeHistoryModal()"><i class="ti ti-x" style="font-size:14px"></i></button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchHistTab('sessions')">รายรอบ</button>
+      <button class="modal-tab" onclick="switchHistTab('perword')">รายคำ</button>
+      <button class="modal-tab" onclick="switchHistTab('bycat')">หมวดหมู่</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Sub-tab: Sessions -->
+      <div class="tab-panel active" id="histtab-sessions">
+        <div class="sort-bar">
+          <span class="sort-lbl">เรียง</span>
+          <button id="sb-sessions-newest" class="sort-btn active" onclick="setSort('sessions','newest')">ล่าสุดก่อน</button>
+          <button id="sb-sessions-oldest" class="sort-btn" onclick="setSort('sessions','oldest')">เก่าสุดก่อน</button>
+          <button id="sb-sessions-knownhigh" class="sort-btn" onclick="setSort('sessions','knownhigh')">รู้มาก ↓</button>
+          <button id="sb-sessions-notknownhigh" class="sort-btn" onclick="setSort('sessions','notknownhigh')">ไม่รู้มาก ↓</button>
+        </div>
+        <div class="empty-state" id="hist2-empty">ยังไม่มีประวัติการทำแบบทดสอบ</div>
+        <div id="hist2-list" style="display:flex;flex-direction:column;gap:10px"></div>
+        <div id="hist2-trend-section" style="display:none;flex-direction:column;gap:6px">
+          <div style="font-size:12px;font-weight:500;color:var(--tx2);padding:2px 0">แนวโน้ม % รู้แล้ว</div>
+          <div id="hist2-trend-chart" class="trend-chart"></div>
+        </div>
+        <button class="action-btn danger hidden" id="hist2-clear-btn" onclick="clearHistory2()"><i class="ti ti-trash"></i> ลบประวัติทั้งหมด</button>
+      </div>
+
+      <!-- Sub-tab: Per Word -->
+      <div class="tab-panel" id="histtab-perword">
+        <div class="sort-bar">
+          <span class="sort-lbl">เรียง</span>
+          <button id="sb-perword-notknownhigh" class="sort-btn active" onclick="setSort('perword','notknownhigh')">ไม่รู้มาก ↓</button>
+          <button id="sb-perword-knownhigh" class="sort-btn" onclick="setSort('perword','knownhigh')">รู้มาก ↓</button>
+          <button id="sb-perword-alpha" class="sort-btn" onclick="setSort('perword','alpha')">ก-ฮ</button>
+        </div>
+        <div class="empty-state" id="perword-empty">ยังไม่มีข้อมูล</div>
+        <div id="perword-list" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
+      <!-- Sub-tab: By Category -->
+      <div class="tab-panel" id="histtab-bycat">
+        <div class="sort-bar">
+          <span class="sort-lbl">เรียง</span>
+          <button id="sb-bycat-notknownhigh" class="sort-btn active" onclick="setSort('bycat','notknownhigh')">ต้องฝึก ↓</button>
+          <button id="sb-bycat-knownhigh" class="sort-btn" onclick="setSort('bycat','knownhigh')">รู้แล้ว ↓</button>
+        </div>
+        <div class="empty-state" id="bycat-empty">ยังไม่มีข้อมูล</div>
+        <div id="bycat-list" style="display:flex;flex-direction:column;gap:10px"></div>
+      </div>
+
+
+    </div>
+  </div>
+</div>
+
+<script>
+let ALL = [];
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; continue; }
+    if (c === ',' && !inQ) { result.push(cur); cur = ''; continue; }
+    cur += c;
+  }
+  result.push(cur);
+  return result;
+}
+
+async function loadVocabCSV() {
+  try {
+    const res = await fetch('vocab.csv');
+    const text = await res.text();
+    const lines = text.trim().split('\n');
+    ALL = lines.slice(1).map(line => {
+      const [en, ph, th, ex, exth, lv, cat, wt] = parseCSVLine(line);
+      return { en: en.trim(), ph: ph.trim(), th: th.trim(), ex: ex.trim(), exth: exth.trim(), lv: lv.trim(), cat: cat.trim(), wt: (wt||'').trim() };
+    }).filter(w => w.en);
+  } catch (e) {
+    console.error('โหลด vocab.csv ไม่สำเร็จ', e);
+    ALL = [];
+  }
+}
+
+// ── Firebase config (โหลดจาก firebase-config.js ที่ gitignore อยู่) ──
+const FIREBASE_CFG = (typeof window !== 'undefined' && window.FIREBASE_CFG) ? window.FIREBASE_CFG : {};
+
+// ── state ──
+const BASE_CATS = ["ทั้งหมด","คำศัพท์ทั่วไป","Phrasal Verbs","Idioms","Verb Forms"];
+let activeCat = "ทั้งหมด";
+let deck = [], idx = 0, flipped = false, done = false;
+let cardStatus = []; // null | 'known' | 'notKnown'
+let sharedVocab = []; // คลังกลาง จาก Firebase (read-only ใน client)
+let firebaseDB = null;
+
+function countKnown() { return cardStatus.filter(s => s === 'known').length; }
+function countNotKnown() { return cardStatus.filter(s => s === 'notKnown').length; }
+function countAnswered() { return cardStatus.filter(s => s !== null).length; }
+function isAllAnswered() { return deck.length > 0 && cardStatus.every(s => s !== null); }
+
+// ── custom vocab (localStorage) ──
+function loadCustom() {
+  try { return JSON.parse(localStorage.getItem('customVocab') || '[]'); } catch { return []; }
+}
+function saveCustom(arr) { localStorage.setItem('customVocab', JSON.stringify(arr)); }
+function getAllWords() {
+  // Deduplicate: ALL → shared → local (first wins)
+  const combined = [...ALL, ...sharedVocab, ...loadCustom()];
+  const seen = new Set();
+  return combined.filter(w => {
+    const k = w.en.toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k); return true;
+  });
+}
+function filtered() {
+  const all = getAllWords();
+  return activeCat === 'ทั้งหมด' ? [...all] : all.filter(w => w.cat === activeCat);
+}
+function getCats() {
+  const cats = [...BASE_CATS];
+  const extra = [...new Set([...sharedVocab, ...loadCustom()].map(w => w.cat))];
+  extra.forEach(c => { if (!cats.includes(c)) cats.push(c); });
+  return cats;
+}
+
+// ── category selects in import forms ──
+function buildCatOptions() {
+  const cats = getCats().filter(c => c !== 'ทั้งหมด' && c !== 'คำของฉัน');
+  const html = `<option value="คำของฉัน">คำของฉัน</option>` +
+    cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  ['inp-cat','paste-cat','file-cat'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const val = el.value;
+    el.innerHTML = html;
+    if ([...el.options].some(o => o.value === val)) el.value = val;
+  });
+}
+
+// ── categories ──
+function buildCats() {
+  const c = document.getElementById('cats');
+  c.innerHTML = '';
+  getCats().forEach(name => {
+    const b = document.createElement('button');
+    b.className = 'cat-btn' + (name === activeCat ? ' active' : '');
+    b.textContent = name;
+    b.onclick = () => {
+      activeCat = name;
+      document.querySelectorAll('.cat-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      restart();
+    };
+    c.appendChild(b);
+  });
+  buildCatOptions();
+}
+
+// ── shuffle ──
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.random() * (i + 1) | 0;
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function findNextUnanswered(currentIdx) {
+  for (let offset = 1; offset <= deck.length; offset++) {
+    const i = (currentIdx + offset) % deck.length;
+    if (cardStatus[i] === null) return i;
+  }
+  return -1;
+}
+
+// ── render ──
+function render() {
+  if (isAllAnswered()) { showDone(); return; }
+  if (idx < 0 || idx >= deck.length) idx = 0;
+  const w = deck[idx];
+  document.getElementById('cEn').textContent = w.en;
+  document.getElementById('cPh').textContent = w.ph || '';
+  document.getElementById('cLv').textContent = [w.wt, w.lv, w.cat].filter(Boolean).join(' · ');
+  document.getElementById('cTh').textContent = w.th;
+  document.getElementById('cEx').textContent = w.ex ? '"' + w.ex + '"' : '';
+  document.getElementById('cExTh').textContent = w.exth || '';
+
+  const answered = countAnswered();
+  const pct = deck.length > 0 ? Math.round(answered / deck.length * 100) : 0;
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progLabel').textContent = answered + ' / ' + deck.length;
+  document.getElementById('progPct').textContent = pct + '%';
+  document.getElementById('stK').textContent = countKnown();
+  document.getElementById('stD').textContent = countNotKnown();
+  document.getElementById('stL').textContent = deck.length - answered;
+  document.getElementById('doneBox').classList.add('hidden');
+  document.getElementById('cardWrap').classList.remove('hidden');
+
+  const status = cardStatus[idx];
+  const ci = document.getElementById('cardInner');
+
+  if (status !== null) {
+    ci.style.transition = 'none';
+    ci.classList.add('flipped');
+    flipped = true;
+    document.getElementById('revealBtn').classList.add('hidden');
+    document.getElementById('resultRow').classList.remove('hidden');
+    document.getElementById('btnKnow').classList.toggle('btn-know-active', status === 'known');
+    document.getElementById('btnDontKnow').classList.toggle('btn-dontknow-active', status === 'notKnown');
+    document.getElementById('cardStatusBadge').textContent = status === 'known' ? '✓ รู้แล้ว' : '✗ ยังไม่รู้';
+    document.getElementById('cardStatusBadge').className = 'card-status-badge badge-' + status;
+    document.getElementById('cardStatusBadge').classList.remove('hidden');
+  } else {
+    ci.style.transition = 'transform .45s cubic-bezier(.4,0,.2,1)';
+    ci.classList.remove('flipped');
+    flipped = false;
+    document.getElementById('revealBtn').classList.remove('hidden');
+    document.getElementById('resultRow').classList.add('hidden');
+    document.getElementById('btnKnow').classList.remove('btn-know-active');
+    document.getElementById('btnDontKnow').classList.remove('btn-dontknow-active');
+    document.getElementById('cardStatusBadge').classList.add('hidden');
+  }
+  resetDrag();
+}
+
+function flip() {
+  if (done) return;
+  flipped = !flipped;
+  document.getElementById('cardInner').classList.toggle('flipped', flipped);
+  document.getElementById('revealBtn').classList.toggle('hidden', flipped);
+  document.getElementById('resultRow').classList.toggle('hidden', !flipped);
+}
+
+function mark(k) {
+  cardStatus[idx] = k ? 'known' : 'notKnown';
+  if (isAllAnswered()) { showDone(); return; }
+  const next = findNextUnanswered(idx);
+  if (next !== -1) { idx = next; }
+  render();
+}
+function go(d) {
+  if (done) return;
+  idx = Math.max(0, Math.min(deck.length - 1, idx + d));
+  flipped = false;
+  render();
+}
+function shuffleAll() {
+  deck = shuffle(filtered());
+  idx = 0; flipped = false; done = false;
+  cardStatus = new Array(deck.length).fill(null);
+  render();
+}
+
+function showDone() {
+  done = true;
+  const sessionKnown = deck.filter((_, i) => cardStatus[i] === 'known').map(w => ({en: w.en, th: w.th}));
+  const sessionNotKnown = deck.filter((_, i) => cardStatus[i] === 'notKnown').map(w => ({en: w.en, th: w.th}));
+  saveHistory({
+    date: new Date().toISOString(),
+    cat: activeCat,
+    total: deck.length,
+    known: sessionKnown,
+    notKnown: sessionNotKnown
+  });
+  document.getElementById('cardWrap').classList.add('hidden');
+  document.getElementById('revealBtn').classList.add('hidden');
+  document.getElementById('resultRow').classList.add('hidden');
+  document.getElementById('progFill').style.width = '100%';
+  document.getElementById('progLabel').textContent = deck.length + ' / ' + deck.length;
+  document.getElementById('progPct').textContent = '100%';
+  const k = countKnown(), nk = countNotKnown();
+  document.getElementById('stK').textContent = k;
+  document.getElementById('stD').textContent = nk;
+  document.getElementById('stL').textContent = 0;
+  document.getElementById('doneSub').textContent = 'รู้แล้ว ' + k + ' คำ · ยังต้องฝึกอีก ' + nk + ' คำ จาก ' + deck.length + ' คำทั้งหมด';
+  document.getElementById('doneBox').classList.remove('hidden');
+}
+
+function restart() {
+  deck = shuffle(filtered());
+  idx = 0; flipped = false; done = false;
+  cardStatus = new Array(deck.length).fill(null);
+  render();
+}
+
+// ── swipe gestures ──
+const H_THR = 72;
+let tx0 = 0, ty0 = 0, dragging = false, didMove = false;
+
+const drag = document.getElementById('cardDrag');
+
+function resetDrag() {
+  drag.style.transition = 'transform .25s ease, opacity .25s ease';
+  drag.style.transform = '';
+  drag.style.opacity = '';
+  setTimeout(() => { drag.style.transition = ''; }, 260);
+  document.getElementById('lblKnow').style.opacity = '0';
+  document.getElementById('lblDont').style.opacity = '0';
+}
+
+function swipeOff(dir, cb) {
+  const vw = window.innerWidth + 250;
+  const map = { right: `translateX(${vw}px) rotate(25deg)`, left: `translateX(-${vw}px) rotate(-25deg)` };
+  drag.style.transition = 'transform .3s ease-in, opacity .3s ease-in';
+  drag.style.transform = map[dir];
+  drag.style.opacity = '0';
+  setTimeout(cb, 300);
+}
+
+drag.addEventListener('touchstart', e => {
+  if (done) return;
+  tx0 = e.touches[0].clientX;
+  ty0 = e.touches[0].clientY;
+  dragging = true;
+  didMove = false;
+  drag.style.transition = 'none';
+}, { passive: true });
+
+drag.addEventListener('touchmove', e => {
+  if (!dragging || done || !flipped) return;
+  const dx = e.touches[0].clientX - tx0;
+  const dy = e.touches[0].clientY - ty0;
+  if (Math.hypot(dx, dy) > 6) didMove = true;
+  e.preventDefault();
+  const rot = dx * 0.06;
+  drag.style.transform = `translateX(${dx}px) translateY(${dy}px) rotate(${rot}deg)`;
+  const hRat = Math.min(Math.abs(dx) / H_THR, 1);
+  document.getElementById('lblKnow').style.opacity = dx > 0 ? hRat : 0;
+  document.getElementById('lblDont').style.opacity = dx < 0 ? hRat : 0;
+}, { passive: false });
+
+drag.addEventListener('touchend', e => {
+  if (!dragging || done) return;
+  dragging = false;
+  const dx = e.changedTouches[0].clientX - tx0;
+  if (!flipped || !didMove) { resetDrag(); return; }
+  if (Math.abs(dx) >= H_THR) {
+    swipeOff(dx > 0 ? 'right' : 'left', () => mark(dx > 0));
+  } else {
+    resetDrag();
+  }
+}, { passive: true });
+
+// prevent tap from firing flip after a swipe
+function handleCardTap() {
+  if (didMove) { didMove = false; return; }
+  flip();
+}
+
+// ── import modal ──
+let pendingFile = null;
+
+function openImport()  { document.getElementById('modalBackdrop').classList.add('open'); switchTab('manual'); }
+function closeImport() { document.getElementById('modalBackdrop').classList.remove('open'); }
+function handleBackdropClick(e) { if (e.target.id === 'modalBackdrop') closeImport(); }
+
+function openHistoryModal() {
+  document.getElementById('histModalBackdrop').classList.add('open');
+  switchHistTab('sessions');
+}
+function closeHistoryModal() { document.getElementById('histModalBackdrop').classList.remove('open'); }
+function handleHistBackdropClick(e) { if (e.target.id === 'histModalBackdrop') closeHistoryModal(); }
+
+// Cross-tab navigation state: y = f(x) — คลิก x ในมุมมองหนึ่งไปดู y อีกมุมมอง
+let histFocusWord = null;
+let histFocusCat = null;
+
+function navToHistTab(tab, opts) {
+  histFocusWord = (opts && opts.word) || null;
+  histFocusCat  = (opts && opts.cat)  || null;
+  switchHistTab(tab);
+}
+
+// Sort state per view
+const histSort = { sessions: 'newest', perword: 'notknownhigh', bycat: 'notknownhigh' };
+
+function setSort(view, key) {
+  histSort[view] = key;
+  document.querySelectorAll(`[id^="sb-${view}-"]`).forEach(b => {
+    b.classList.toggle('active', b.id === `sb-${view}-${key}`);
+  });
+  if (view === 'sessions') refreshSessions();
+  if (view === 'perword')  refreshPerWord();
+  if (view === 'bycat')    refreshByCategory();
+}
+
+const HIST_TAB_IDS = ['sessions','perword','bycat'];
+function switchHistTab(name) {
+  document.querySelectorAll('#histModalBackdrop .tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#histModalBackdrop .modal-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('histtab-' + name).classList.add('active');
+  document.querySelectorAll('#histModalBackdrop .modal-tab')[HIST_TAB_IDS.indexOf(name)].classList.add('active');
+  if (name === 'sessions') refreshSessions();
+  if (name === 'perword')  refreshPerWord();
+  if (name === 'bycat')    refreshByCategory();
+}
+
+const TAB_IDS = ['manual','paste','file','manage'];
+const TAB_TITLES = {manual:'เพิ่มคำศัพท์',paste:'เพิ่มคำศัพท์',file:'นำเข้าไฟล์',manage:'จัดการคำศัพท์'};
+function switchTab(name) {
+  document.querySelectorAll('#modalBackdrop .tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#modalBackdrop .modal-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('#modalBackdrop .modal-tab')[TAB_IDS.indexOf(name)].classList.add('active');
+  document.querySelector('#modalBackdrop .modal-title').textContent = TAB_TITLES[name] || 'เพิ่มคำศัพท์';
+  if (name === 'manage') refreshManage();
+}
+
+function showMsg(id, text, ok) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.style.display = 'block';
+  el.style.background = ok ? 'var(--bg-ok)' : 'var(--bg-err)';
+  el.style.color = ok ? 'var(--tx-ok)' : 'var(--tx-err)';
+  setTimeout(() => { el.style.display = 'none'; }, 3500);
+}
+
+// manual add
+function addManual() {
+  const en = document.getElementById('inp-en').value.trim();
+  const th = document.getElementById('inp-th').value.trim();
+  if (!en || !th) { showMsg('manual-msg', 'กรุณากรอกคำอังกฤษและคำแปล', false); return; }
+  const w = {
+    en, th,
+    ph:  document.getElementById('inp-ph').value.trim(),
+    ex:  document.getElementById('inp-ex').value.trim(),
+    exth:document.getElementById('inp-exth').value.trim(),
+    lv:  document.getElementById('inp-lv').value,
+    cat: document.getElementById('inp-cat').value,
+    wt:  document.getElementById('inp-wt').value
+  };
+  const arr = loadCustom(); arr.push(w); saveCustom(arr);
+  ['inp-en','inp-th','inp-ph','inp-ex','inp-exth'].forEach(id => document.getElementById(id).value = '');
+  showMsg('manual-msg', 'เพิ่ม "' + en + '" เรียบร้อยแล้ว!', true);
+  buildCats();
+}
+
+// parse text
+function parseText(text, cat = 'คำของฉัน') {
+  return text.split('\n').map(l => l.trim()).filter(Boolean).reduce((acc, line) => {
+    let en, th, ph = '', ex = '', exth = '', lv = 'ม.1';
+    const parts = parseCSVLine(line).map(s => s.trim());
+    let wt = '';
+    if (parts.length >= 6 && ALLOWED_LV.includes(parts[5])) {
+      // full format: en, th, ph, ex, exth, lv[, wt]  (ตรวจจาก field 6 เป็น ม.x)
+      [en, th, ph, ex, exth, lv] = parts; wt = parts[6] || '';
+    } else if (/\s+-\s+/.test(line)) {
+      [en, th] = line.split(/\s+-\s+/);
+    } else {
+      en = parts[0]; th = parts.slice(1).join(',');
+    }
+    en = en?.trim(); th = th?.trim();
+    if (en && th) acc.push({ en, th, ph: ph||'', ex: ex||'', exth: exth||'', lv: ALLOWED_LV.includes(lv) ? lv : 'ม.1', wt: wt||'', cat });
+    return acc;
+  }, []);
+}
+
+// paste tab
+document.getElementById('inp-paste').addEventListener('input', function() {
+  const n = parseText(this.value).length;
+  const el = document.getElementById('paste-msg');
+  if (n > 0) { el.textContent = 'พบ ' + n + ' คำ'; el.style.display='block'; el.style.background='var(--bg-ok)'; el.style.color='var(--tx-ok)'; }
+  else el.style.display = 'none';
+});
+
+function importPaste() {
+  const cat = document.getElementById('paste-cat').value;
+  const words = parseText(document.getElementById('inp-paste').value, cat);
+  if (!words.length) { showMsg('paste-msg','ไม่พบคำศัพท์ในรูปแบบที่รองรับ', false); return; }
+  const arr = loadCustom(); arr.push(...words); saveCustom(arr);
+  document.getElementById('inp-paste').value = '';
+  document.getElementById('paste-msg').style.display = 'none';
+  showMsg('paste-msg', 'นำเข้า ' + words.length + ' คำ เรียบร้อยแล้ว!', true);
+  buildCats();
+}
+
+// file tab
+function parseCSV(text, cat = 'คำของฉัน') {
+  return text.split('\n').map(l => l.trim()).filter(Boolean).reduce((acc, line) => {
+    const cols = parseCSVLine(line).map(c => c.trim());
+    if (cols.length >= 2 && cols[0] && cols[1])
+      acc.push({ en:cols[0], th:cols[1], ph:cols[2]||'', ex:cols[3]||'', exth:cols[4]||'', lv:cols[5]||'ม.1', wt:cols[6]||'', cat });
+    return acc;
+  }, []);
+}
+
+function handleFileUpload(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const cat = document.getElementById('file-cat').value;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const words = file.name.endsWith('.csv') ? parseCSV(ev.target.result, cat) : parseText(ev.target.result, cat);
+    pendingFile = words;
+    const ok = words.length > 0;
+    showMsg('file-msg', ok ? 'พบ ' + words.length + ' คำ พร้อมนำเข้า' : 'ไม่พบคำศัพท์ กรุณาตรวจสอบรูปแบบ', ok);
+    document.getElementById('file-import-btn').classList.toggle('hidden', !ok);
+  };
+  reader.readAsText(file, 'UTF-8');
+  e.target.value = '';
+}
+
+function importFileData() {
+  if (!pendingFile?.length) return;
+  const arr = loadCustom(); arr.push(...pendingFile); saveCustom(arr);
+  pendingFile = null;
+  document.getElementById('file-import-btn').classList.add('hidden');
+  showMsg('file-msg', 'นำเข้าเรียบร้อยแล้ว!', true);
+  buildCats();
+}
+
+// manage tab
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function refreshManage() {
+  // ── shared vocab (read from Firebase) ──
+  const sharedList = document.getElementById('shared-list');
+  const sharedEmpty = document.getElementById('shared-empty');
+  sharedList.innerHTML = '';
+  sharedEmpty.style.display = sharedVocab.length ? 'none' : 'block';
+  sharedVocab.forEach(w => {
+    const d = document.createElement('div');
+    d.className = 'shared-item';
+    d.innerHTML =
+      `<div class="custom-item-text" style="flex:1">
+         <div class="ci-en">${esc(w.en)} <span style="font-size:10px;color:var(--tx-info);margin-left:4px">${esc(w.cat||'')}</span></div>
+         <div class="ci-th">${esc(w.th)}</div>
+       </div>`;
+    sharedList.appendChild(d);
+  });
+
+  // ── local drafts ──
+  const custom = loadCustom();
+  const list = document.getElementById('custom-list');
+  const empty = document.getElementById('custom-empty');
+  const btn = document.getElementById('clear-btn');
+  list.innerHTML = '';
+  empty.style.display = custom.length ? 'none' : 'block';
+  btn.classList.toggle('hidden', !custom.length);
+  custom.forEach((w, i) => {
+    const canPublish = !!firebaseDB;
+    const d = document.createElement('div');
+    d.className = 'custom-item';
+    d.innerHTML =
+      `<div class="custom-item-text">
+         <div class="ci-en">${esc(w.en)}</div>
+         <div class="ci-th">${esc(w.th)}</div>
+       </div>
+       ${canPublish ? `<button class="ci-pub" onclick="publishAndRemove(${i})" title="เผยแพร่สู่คลังกลาง"><i class="ti ti-world-upload" style="font-size:12px"></i> เผยแพร่</button>` : ''}
+       <button class="ci-del" onclick="delCustom(${i})"><i class="ti ti-trash" style="font-size:13px"></i></button>`;
+    list.appendChild(d);
+  });
+}
+
+function delCustom(i) {
+  const arr = loadCustom(); arr.splice(i, 1); saveCustom(arr);
+  buildCats(); refreshManage();
+}
+
+function clearAllCustom() {
+  if (!confirm('ลบคำศัพท์ที่เพิ่มเองทั้งหมด?')) return;
+  saveCustom([]);
+  if (activeCat === 'คำของฉัน') activeCat = 'ทั้งหมด';
+  buildCats(); refreshManage(); restart();
+}
+
+// ── history ──
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem('testHistory') || '[]'); } catch { return []; }
+}
+function saveHistory(session) {
+  const arr = loadHistory();
+  session.round = arr.length > 0 ? ((arr[0].round || arr.length) + 1) : 1;
+  arr.unshift(session);
+  if (arr.length > 30) arr.length = 30;
+  localStorage.setItem('testHistory', JSON.stringify(arr));
+}
+function clearHistory() {
+  if (!confirm('ลบประวัติการทำแบบทดสอบทั้งหมด?')) return;
+  localStorage.removeItem('testHistory');
+  refreshSessions();
+}
+function clearHistory2() {
+  if (!confirm('ลบประวัติการทำแบบทดสอบทั้งหมด?')) return;
+  localStorage.removeItem('testHistory');
+  refreshSessions();
+}
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('th-TH', {day:'numeric',month:'short',year:'numeric'}) + ' · ' +
+         d.toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
+}
+function toggleSession(headerEl) {
+  headerEl.closest('.hist-session').classList.toggle('expanded');
+}
+function refreshSessions() {
+  const sessions = loadHistory();
+  // Assign round numbers from stored order (newest = highest)
+  sessions.forEach((s, i) => { s._rn = s.round || (sessions.length - i); });
+  const list = document.getElementById('hist2-list');
+  const empty = document.getElementById('hist2-empty');
+  const btn = document.getElementById('hist2-clear-btn');
+  empty.style.display = sessions.length ? 'none' : 'block';
+  btn.classList.toggle('hidden', !sessions.length);
+  list.innerHTML = '';
+  // Apply sort
+  const sorted = [...sessions];
+  const sk = histSort.sessions;
+  if (sk === 'oldest') sorted.reverse();
+  else if (sk === 'knownhigh') sorted.sort((a,b) => (b.known.length/b.total||0) - (a.known.length/a.total||0));
+  else if (sk === 'notknownhigh') sorted.sort((a,b) => (b.notKnown.length/b.total||0) - (a.notKnown.length/a.total||0));
+  const newestDate = sessions[0]?.date;
+  sorted.forEach(s => {
+    const roundNum = s._rn;
+    const k = s.known.length;
+    const nk = s.notKnown.length;
+    const pct = s.total > 0 ? Math.round(k / s.total * 100) : 0;
+    const allWords = [
+      ...s.known.map(w => ({...w, status:'known'})),
+      ...s.notKnown.map(w => ({...w, status:'notKnown'}))
+    ];
+    const rows = allWords.map(w => {
+      const catWord = getAllWords().find(v => v.en.toLowerCase() === w.en.toLowerCase());
+      const catCell = catWord ? esc(catWord.cat) : '—';
+      return `<tr><td>${esc(w.en)}</td><td style="color:var(--tx-info);font-size:11px">${catCell}</td><td>${esc(w.th)}</td><td class="td-status-${w.status}">${w.status === 'known' ? '✓ รู้' : '✗ ไม่รู้'}</td></tr>`;
+    }).join('');
+    const d = document.createElement('div');
+    d.className = 'hist-session';
+    d.innerHTML =
+      `<div class="hist-session-header" onclick="toggleSession(this)">
+        <i class="ti ti-chevron-right hist-expand-icon"></i>
+        <div style="flex:1">
+          <div class="hist-meta">
+            <span style="font-size:14px;font-weight:700;color:var(--tx)">ครั้งที่ ${roundNum}</span>
+            <span class="hist-badge">${esc(s.cat)}</span>
+            ${s.date === newestDate ? '<span style="font-size:10px;padding:2px 6px;border-radius:99px;background:var(--bg-ok);color:var(--tx-ok);border:.5px solid var(--bd-ok)">ล่าสุด</span>' : ''}
+          </div>
+          <div class="hist-date" style="margin-top:2px">${formatDate(s.date)}</div>
+          <div class="hist-score" style="margin-top:3px">รู้ <b style="color:var(--tx-ok)">${k}</b> · ไม่รู้ <b style="color:var(--tx-err)">${nk}</b> · ${pct}% <span style="color:var(--tx3)">/ ${s.total} คำ</span></div>
+        </div>
+      </div>
+      <div class="hist-table-wrap">
+        <table class="hist-table">
+          <thead><tr><th>คำ</th><th>หมวด</th><th>ความหมาย</th><th>สถานะ</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+    list.appendChild(d);
+  });
+
+  // Inline trend chart — shown when ≥2 sessions
+  const trendSection = document.getElementById('hist2-trend-section');
+  const trendChart = document.getElementById('hist2-trend-chart');
+  trendChart.innerHTML = '';
+  if (sessions.length >= 2) {
+    trendSection.style.display = 'flex';
+    sessions.forEach((s, i) => { s._rn = s.round || (sessions.length - i); });
+    const ordered = [...sessions].reverse(); // oldest first
+    ordered.forEach(s => {
+      const pct = s.total > 0 ? Math.round(s.known.length / s.total * 100) : 0;
+      const item = document.createElement('div');
+      item.className = 'trend-item';
+      item.style.alignItems = 'flex-start';
+      item.innerHTML =
+        `<div class="trend-dot" style="margin-top:4px"></div>
+         <div style="min-width:96px">
+           <div style="font-size:12px;font-weight:600;color:var(--tx)">ครั้งที่ ${s._rn}</div>
+           <div style="font-size:10px;color:var(--tx3);line-height:1.5">${formatDate(s.date)}</div>
+         </div>
+         <div class="trend-bar-wrap" style="margin-top:6px">
+           <div class="trend-bar-fill" style="width:${pct}%">
+             ${pct >= 15 ? `<span class="trend-bar-pct">${pct}%</span>` : ''}
+           </div>
+         </div>
+         ${pct < 15 ? `<span style="font-size:10px;color:var(--tx3);min-width:28px;margin-top:6px">${pct}%</span>` : ''}`;
+      trendChart.appendChild(item);
+    });
+  } else {
+    trendSection.style.display = 'none';
+  }
+}
+function refreshPerWord() {
+  const sessions = loadHistory();
+  const empty = document.getElementById('perword-empty');
+  const list = document.getElementById('perword-list');
+  list.innerHTML = '';
+  if (!sessions.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  const map = new Map();
+  const addWord = (w, result) => {
+    const key = w.en.toLowerCase();
+    if (!map.has(key)) {
+      const catWord = getAllWords().find(v => v.en.toLowerCase() === key);
+      map.set(key, {en: w.en, th: w.th, cat: catWord ? catWord.cat : null, known: 0, notKnown: 0});
+    }
+    map.get(key)[result]++;
+  };
+  sessions.forEach(s => {
+    s.known.forEach(w => addWord(w, 'known'));
+    s.notKnown.forEach(w => addWord(w, 'notKnown'));
+  });
+  const base = [...map.values()];
+  const sk = histSort.perword;
+  const words = base.sort((a, b) => {
+    if (sk === 'knownhigh') return (b.known/(b.known+b.notKnown)||0) - (a.known/(a.known+a.notKnown)||0);
+    if (sk === 'alpha') return a.en.localeCompare(b.en, 'th');
+    // default notknownhigh
+    const ra = a.notKnown/(a.known+a.notKnown), rb = b.notKnown/(b.known+b.notKnown);
+    return rb - ra || (b.notKnown+b.known) - (a.notKnown+a.known);
+  });
+  words.forEach(w => {
+    const total = w.known + w.notKnown;
+    const knownPct = total > 0 ? Math.round(w.known / total * 100) : 0;
+    const notKnownPct = 100 - knownPct;
+    const catChip = w.cat
+      ? `<button class="word-cat-chip" data-cat="${esc(w.cat)}" onclick="navToHistTab('bycat',{cat:this.dataset.cat})">${esc(w.cat)}</button>`
+      : '';
+    const d = document.createElement('div');
+    d.className = 'word-stat-item';
+    d.dataset.word = w.en.toLowerCase();
+    d.innerHTML =
+      `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+         <span class="word-stat-label">${esc(w.en)}</span>${catChip}
+       </div>
+       <div class="word-stat-meaning">${esc(w.th)}</div>
+       <div class="word-stat-bar">
+         <div class="bar-notknown" style="width:${notKnownPct}%"></div>
+         <div class="bar-known" style="width:${knownPct}%"></div>
+       </div>
+       <div class="word-stat-counts">
+         <span style="color:var(--tx-err)">ไม่รู้ ${w.notKnown}</span>
+         <span style="color:var(--tx3)"> · </span>
+         <span style="color:var(--tx-ok)">รู้ ${w.known}</span>
+         <span style="color:var(--tx3)"> · รวม ${total} ครั้ง</span>
+       </div>`;
+    list.appendChild(d);
+  });
+  if (histFocusWord) {
+    const focusKey = histFocusWord;
+    histFocusWord = null;
+    setTimeout(() => {
+      for (const el of list.querySelectorAll('[data-word]')) {
+        if (el.dataset.word === focusKey) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          el.classList.add('focused');
+          setTimeout(() => el.classList.remove('focused'), 2000);
+          break;
+        }
+      }
+    }, 80);
+  }
+}
+function refreshByCategory() {
+  const sessions = loadHistory();
+  const empty = document.getElementById('bycat-empty');
+  const list = document.getElementById('bycat-list');
+  list.innerHTML = '';
+  if (!sessions.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  const wordMap = new Map();
+  const addWord = (w, result) => {
+    const key = w.en.toLowerCase();
+    if (!wordMap.has(key)) {
+      const catWord = getAllWords().find(v => v.en.toLowerCase() === key);
+      wordMap.set(key, {en: w.en, th: w.th, cat: catWord ? catWord.cat : 'อื่นๆ', known: 0, notKnown: 0});
+    }
+    wordMap.get(key)[result]++;
+  };
+  sessions.forEach(s => {
+    s.known.forEach(w => addWord(w, 'known'));
+    s.notKnown.forEach(w => addWord(w, 'notKnown'));
+  });
+  const catMap = new Map();
+  wordMap.forEach(w => {
+    if (!catMap.has(w.cat)) catMap.set(w.cat, {name: w.cat, words: [], known: 0, notKnown: 0});
+    const entry = catMap.get(w.cat);
+    entry.words.push(w);
+    entry.known += w.known;
+    entry.notKnown += w.notKnown;
+  });
+  const sk2 = histSort.bycat;
+  const cats = [...catMap.values()].sort((a, b) => {
+    if (sk2 === 'knownhigh') return (b.known/(b.known+b.notKnown)||0) - (a.known/(a.known+a.notKnown)||0);
+    // default notknownhigh
+    return (b.notKnown/(b.known+b.notKnown)||0) - (a.notKnown/(a.known+a.notKnown)||0);
+  });
+  const focusCat = histFocusCat;
+  histFocusCat = null;
+  cats.forEach(cat => {
+    const total = cat.known + cat.notKnown;
+    const notKnownPct = total > 0 ? Math.round(cat.notKnown / total * 100) : 0;
+    const knownPct = 100 - notKnownPct;
+    cat.words.sort((a, b) => {
+      const ra = a.notKnown / (a.known + a.notKnown);
+      const rb = b.notKnown / (b.known + b.notKnown);
+      return rb - ra;
+    });
+    const wordRows = cat.words.map(w => {
+      const wTotal = w.known + w.notKnown;
+      const wNKPct = wTotal > 0 ? Math.round(w.notKnown / wTotal * 100) : 0;
+      return `<div style="padding:8px 0;border-bottom:.5px solid var(--bd2)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          <div>
+            <span style="font-size:13px;font-weight:500;color:var(--tx)">${esc(w.en)}</span>
+            <span style="font-size:12px;color:var(--tx2);margin-left:6px">${esc(w.th)}</span>
+          </div>
+          <button class="nav-link" data-word="${esc(w.en.toLowerCase())}" onclick="navToHistTab('perword',{word:this.dataset.word})">↗ รายคำ</button>
+        </div>
+        <div class="word-stat-bar">
+          <div class="bar-notknown" style="width:${wNKPct}%"></div>
+          <div class="bar-known" style="width:${100-wNKPct}%"></div>
+        </div>
+        <div style="font-size:11px;color:var(--tx3);margin-top:3px">
+          <span style="color:var(--tx-err)">ไม่รู้ ${w.notKnown}</span> · <span style="color:var(--tx-ok)">รู้ ${w.known}</span> · รวม ${wTotal} ครั้ง
+        </div>
+      </div>`;
+    }).join('');
+    const d = document.createElement('div');
+    d.className = 'hist-session' + (focusCat === cat.name ? ' expanded' : '');
+    d.dataset.cat = cat.name;
+    d.innerHTML =
+      `<div class="hist-session-header" onclick="toggleSession(this)">
+        <i class="ti ti-chevron-right hist-expand-icon"></i>
+        <div style="flex:1">
+          <div class="hist-meta">
+            <span style="font-size:13px;font-weight:500;color:var(--tx)">${esc(cat.name)}</span>
+            <span class="hist-badge">${cat.words.length} คำ</span>
+          </div>
+          <div class="hist-score">ไม่รู้ <b style="color:var(--tx-err)">${cat.notKnown}</b> · รู้ <b style="color:var(--tx-ok)">${cat.known}</b> · ${notKnownPct}% ต้องฝึก</div>
+          <div class="word-stat-bar" style="margin-top:6px">
+            <div class="bar-notknown" style="width:${notKnownPct}%"></div>
+            <div class="bar-known" style="width:${knownPct}%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="hist-table-wrap">
+        <div style="padding:0 4px 4px">${wordRows}</div>
+      </div>`;
+    list.appendChild(d);
+  });
+  if (focusCat) {
+    setTimeout(() => {
+      for (const el of list.querySelectorAll('[data-cat]')) {
+        if (el.dataset.cat === focusCat) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          break;
+        }
+      }
+    }, 80);
+  }
+}
+function refreshTrend() {
+  const sessions = loadHistory();
+  const empty = document.getElementById('trend-empty');
+  const chart = document.getElementById('trend-chart');
+  chart.innerHTML = '';
+  if (sessions.length < 2) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  // Assign round numbers (newest = highest), then reverse to oldest-first for trend
+  sessions.forEach((s, i) => { s._rn = s.round || (sessions.length - i); });
+  const ordered = [...sessions].reverse();
+  ordered.forEach(s => {
+    const pct = s.total > 0 ? Math.round(s.known.length / s.total * 100) : 0;
+    const d = document.createElement('div');
+    d.className = 'trend-item';
+    d.style.alignItems = 'flex-start';
+    d.innerHTML =
+      `<div class="trend-dot" style="margin-top:4px"></div>
+       <div style="min-width:96px">
+         <div style="font-size:12px;font-weight:600;color:var(--tx)">ครั้งที่ ${s._rn}</div>
+         <div style="font-size:10px;color:var(--tx3);line-height:1.5">${formatDate(s.date)}</div>
+       </div>
+       <div class="trend-bar-wrap" style="margin-top:6px">
+         <div class="trend-bar-fill" style="width:${pct}%">
+           ${pct >= 15 ? `<span class="trend-bar-pct">${pct}%</span>` : ''}
+         </div>
+       </div>
+       ${pct < 15 ? `<span style="font-size:10px;color:var(--tx3);min-width:28px;margin-top:6px">${pct}%</span>` : ''}`;
+    chart.appendChild(d);
+  });
+}
+
+// ── Firebase ──
+function initFirebase() {
+  if (!FIREBASE_CFG.databaseURL) {
+    document.getElementById('shared-status').style.display = 'block';
+    document.getElementById('shared-status').textContent = 'ยังไม่ได้ตั้งค่า Firebase — ดู comment ในโค้ด';
+    return;
+  }
+  try {
+    firebase.initializeApp(FIREBASE_CFG);
+    firebaseDB = firebase.database();
+    // Real-time listener: ทุกคนเห็นพร้อมกันเมื่อมีการเพิ่มคำใหม่
+    firebaseDB.ref('sharedVocab').on('value', snap => {
+      sharedVocab = snap.val() ? Object.values(snap.val()) : [];
+      buildCats();
+      if (document.getElementById('tab-manage').classList.contains('active')) refreshManage();
+    });
+  } catch(e) {
+    console.warn('Firebase error:', e);
+  }
+}
+
+const ALLOWED_LV = ['ม.1','ม.2','ม.3','ม.4','ม.5','ม.6'];
+function sanitizeField(s, max) {
+  return String(s || '').replace(/<[^>]*>/g, '').replace(/[<>'"]/g, '').trim().slice(0, max);
+}
+
+function publishWord(word) {
+  if (!firebaseDB) return false;
+  const en = sanitizeField(word.en, 200);
+  const th = sanitizeField(word.th, 200);
+  if (!en || !th) return false;
+  firebaseDB.ref('sharedVocab').push({
+    en,
+    th,
+    ph:   sanitizeField(word.ph,   100),
+    ex:   sanitizeField(word.ex,   400),
+    exth: sanitizeField(word.exth, 400),
+    lv:   ALLOWED_LV.includes(word.lv) ? word.lv : 'ม.1',
+    cat:  sanitizeField(word.cat,  50) || 'คำของฉัน',
+    wt:   sanitizeField(word.wt,   30),
+    _addedAt: Date.now()
+  });
+  return true;
+}
+
+function publishAndRemove(i) {
+  const arr = loadCustom();
+  const word = arr[i];
+  if (!publishWord(word)) {
+    alert('กรุณาตั้งค่า Firebase ก่อนเผยแพร่ (ดู comment ในโค้ด)'); return;
+  }
+  arr.splice(i, 1);
+  saveCustom(arr);
+  buildCats(); refreshManage();
+}
+
+// ── Math mode ──
+const MATH_CATS = ["ทั้งหมด","ร้อยละ","อัตราส่วน","สมการ","เรขาคณิต","ลำดับและอนุกรม","สถิติ","ความน่าจะเป็น","เลขยกกำลัง","ตรีโกณมิติ","เซต","แคลคูลัส"];
+let mathMode = false;
+let mathActiveCat = "ทั้งหมด";
+let mathDeck = [], mathIdx = 0, mathDone = false;
+let mathAnswered = [];
+
+const MATH_DATA = [
+  // ร้อยละ
+  {q:"ราคาสินค้า 800 บาท ลดราคา 15% ราคาใหม่เป็นเท่าใด",a:"680 บาท",choices:["640 บาท","660 บาท","680 บาท","700 บาท"],ex:"800 × (1 − 0.15) = 800 × 0.85 = 680 บาท",topic:"ร้อยละ",lv:"ม.1"},
+  {q:"นักเรียน 40 คน สอบผ่าน 32 คน คิดเป็นกี่เปอร์เซ็นต์",a:"80%",choices:["70%","75%","80%","85%"],ex:"32 ÷ 40 × 100 = 80%",topic:"ร้อยละ",lv:"ม.1"},
+  {q:"25% ของจำนวนหนึ่งมีค่าเท่ากับ 75 จำนวนนั้นคือเท่าใด",a:"300",choices:["200","250","300","350"],ex:"x × 25/100 = 75 → x = 75 × 4 = 300",topic:"ร้อยละ",lv:"ม.1"},
+  {q:"ของราคา 500 บาท เพิ่มราคา 20% แล้วลดราคา 20% ราคาสุดท้ายเป็นเท่าใด",a:"480 บาท",choices:["500 บาท","480 บาท","490 บาท","450 บาท"],ex:"500 × 1.2 × 0.8 = 500 × 0.96 = 480 บาท",topic:"ร้อยละ",lv:"ม.2"},
+  {q:"ประชากรเมือง 50,000 คน เพิ่มขึ้น 4% ประชากรใหม่เป็นเท่าใด",a:"52,000 คน",choices:["51,000 คน","51,500 คน","52,000 คน","53,000 คน"],ex:"50,000 × 1.04 = 52,000",topic:"ร้อยละ",lv:"ม.1"},
+  {q:"ลดราคา 30% แล้วราคาเหลือ 350 บาท ราคาเดิมคือเท่าใด",a:"500 บาท",choices:["420 บาท","450 บาท","480 บาท","500 บาท"],ex:"ราคาเดิม × 0.70 = 350 → ราคาเดิม = 500",topic:"ร้อยละ",lv:"ม.2"},
+  {q:"กำไร 60 บาท จากต้นทุน 400 บาท คิดเป็นกำไรกี่เปอร์เซ็นต์",a:"15%",choices:["10%","12%","15%","20%"],ex:"60 ÷ 400 × 100 = 15%",topic:"ร้อยละ",lv:"ม.2"},
+  {q:"ซื้อของ 2 ชิ้น ราคา 240 และ 160 บาท ได้ส่วนลด 10% ราคาที่ต้องจ่ายเป็นเท่าใด",a:"360 บาท",choices:["320 บาท","340 บาท","360 บาท","380 บาท"],ex:"(240+160) × 0.9 = 400 × 0.9 = 360 บาท",topic:"ร้อยละ",lv:"ม.1"},
+  {q:"เงินฝากธนาคาร 10,000 บาท ดอกเบี้ย 5% ต่อปี ดอกเบี้ยปีแรกเป็นเท่าใด",a:"500 บาท",choices:["200 บาท","300 บาท","500 บาท","1,000 บาท"],ex:"10,000 × 5/100 = 500 บาท",topic:"ร้อยละ",lv:"ม.2"},
+  {q:"ผู้ชาย 60 คน ผู้หญิง 40 คน สัดส่วนผู้ชายคิดเป็นกี่เปอร์เซ็นต์",a:"60%",choices:["40%","50%","60%","67%"],ex:"60/(60+40) × 100 = 60%",topic:"ร้อยละ",lv:"ม.1"},
+  // อัตราส่วน
+  {q:"แบ่งเงิน 1,200 บาท ในอัตราส่วน 3:5 ส่วนที่มากกว่าได้เท่าใด",a:"750 บาท",choices:["400 บาท","600 บาท","750 บาท","900 บาท"],ex:"ส่วนรวม = 8, ส่วนมาก = 1200 × 5/8 = 750",topic:"อัตราส่วน",lv:"ม.1"},
+  {q:"A:B = 2:3 และ B:C = 4:5 แล้ว A:C มีค่าเท่าใด",a:"8:15",choices:["2:5","6:10","8:15","10:15"],ex:"ทำ B ร่วม = 12: A:B = 8:12, B:C = 12:15 → A:C = 8:15",topic:"อัตราส่วน",lv:"ม.2"},
+  {q:"น้ำผสมน้ำตาลในอัตราส่วน 3:1 ถ้ามีน้ำตาล 200 กรัม ต้องใช้น้ำเท่าใด",a:"600 กรัม",choices:["200 กรัม","400 กรัม","600 กรัม","800 กรัม"],ex:"น้ำ = 200 × 3 = 600 กรัม",topic:"อัตราส่วน",lv:"ม.1"},
+  {q:"แผนที่มาตราส่วน 1:50,000 ระยะในแผนที่ 4 ซม. ระยะจริงเป็นเท่าใด",a:"2 กม.",choices:["200 ม.","500 ม.","1 กม.","2 กม."],ex:"4 × 50,000 = 200,000 ซม. = 2,000 ม. = 2 กม.",topic:"อัตราส่วน",lv:"ม.2"},
+  {q:"คน 8 คน ทำงานเสร็จใน 15 วัน ถ้าเพิ่มเป็น 12 คน จะเสร็จในกี่วัน",a:"10 วัน",choices:["8 วัน","10 วัน","12 วัน","20 วัน"],ex:"8 × 15 = 12 × x → x = 10 วัน",topic:"อัตราส่วน",lv:"ม.2"},
+  {q:"รถวิ่ง 90 กม./ชม. ใช้เวลา 2 ชั่วโมง 30 นาที วิ่งได้กี่กิโลเมตร",a:"225 กม.",choices:["180 กม.","200 กม.","225 กม.","270 กม."],ex:"90 × 2.5 = 225 กม.",topic:"อัตราส่วน",lv:"ม.1"},
+  // สมการ
+  {q:"3x − 7 = 14 แล้ว x มีค่าเท่าใด",a:"7",choices:["5","6","7","8"],ex:"3x = 21 → x = 7",topic:"สมการ",lv:"ม.1"},
+  {q:"2(x + 3) = 16 แล้ว x มีค่าเท่าใด",a:"5",choices:["4","5","6","7"],ex:"x + 3 = 8 → x = 5",topic:"สมการ",lv:"ม.1"},
+  {q:"5x + 3 = 3x + 11 แล้ว x มีค่าเท่าใด",a:"4",choices:["2","3","4","5"],ex:"2x = 8 → x = 4",topic:"สมการ",lv:"ม.1"},
+  {q:"x + y = 10 และ x − y = 4 แล้ว x มีค่าเท่าใด",a:"7",choices:["5","6","7","8"],ex:"บวกสองสมการ: 2x = 14 → x = 7",topic:"สมการ",lv:"ม.2"},
+  {q:"2x + 3y = 12 และ x + y = 5 แล้ว x มีค่าเท่าใด",a:"3",choices:["1","2","3","4"],ex:"จาก eq2: x=5−y; แทน eq1: 10−2y+3y=12 → y=2, x=3",topic:"สมการ",lv:"ม.3"},
+  {q:"ถ้า f(x) = 2x + 1 แล้ว f(3) มีค่าเท่าใด",a:"7",choices:["5","6","7","8"],ex:"f(3) = 2(3) + 1 = 7",topic:"สมการ",lv:"ม.2"},
+  {q:"x² − 5x + 6 = 0 ผลบวกของคำตอบทั้งสองมีค่าเท่าใด",a:"5",choices:["3","4","5","6"],ex:"(x−2)(x−3)=0 → x=2 หรือ 3, ผลบวก=5",topic:"สมการ",lv:"ม.3"},
+  {q:"x² = 49 แล้ว x มีค่าเท่าใด",a:"±7",choices:["7","−7","±7","49"],ex:"x = ±√49 = ±7",topic:"สมการ",lv:"ม.2"},
+  // เรขาคณิต
+  {q:"สี่เหลี่ยมผืนผ้ากว้าง 6 ซม. ยาว 10 ซม. มีพื้นที่เท่าใด",a:"60 ตร.ซม.",choices:["32 ตร.ซม.","36 ตร.ซม.","60 ตร.ซม.","120 ตร.ซม."],ex:"พื้นที่ = 6 × 10 = 60 ตร.ซม.",topic:"เรขาคณิต",lv:"ม.1"},
+  {q:"วงกลมรัศมี 7 ซม. มีพื้นที่เท่าใด (π ≈ 22/7)",a:"154 ตร.ซม.",choices:["44 ตร.ซม.","154 ตร.ซม.","176 ตร.ซม.","196 ตร.ซม."],ex:"A = πr² = 22/7 × 49 = 154",topic:"เรขาคณิต",lv:"ม.1"},
+  {q:"สามเหลี่ยมฐาน 8 ซม. สูง 5 ซม. มีพื้นที่เท่าใด",a:"20 ตร.ซม.",choices:["13 ตร.ซม.","20 ตร.ซม.","40 ตร.ซม.","80 ตร.ซม."],ex:"A = ½ × 8 × 5 = 20 ตร.ซม.",topic:"เรขาคณิต",lv:"ม.1"},
+  {q:"สามเหลี่ยมมุมฉากด้านประกอบ 3 ซม. และ 4 ซม. ด้านตรงข้ามมุมฉากยาวเท่าใด",a:"5 ซม.",choices:["3 ซม.","4 ซม.","5 ซม.","7 ซม."],ex:"c² = 3²+4² = 25 → c = 5",topic:"เรขาคณิต",lv:"ม.3"},
+  {q:"กล่องสี่เหลี่ยมยาว 4 กว้าง 3 สูง 2 ซม. ปริมาตรเท่าใด",a:"24 ลบ.ซม.",choices:["9 ลบ.ซม.","12 ลบ.ซม.","24 ลบ.ซม.","48 ลบ.ซม."],ex:"V = 4 × 3 × 2 = 24 ลบ.ซม.",topic:"เรขาคณิต",lv:"ม.2"},
+  {q:"สี่เหลี่ยมจัตุรัสด้าน 5 ซม. เส้นทแยงมุมยาวเท่าใด",a:"5√2 ซม.",choices:["5 ซม.","5√2 ซม.","10 ซม.","10√2 ซม."],ex:"d = a√2 = 5√2 ≈ 7.07 ซม.",topic:"เรขาคณิต",lv:"ม.3"},
+  {q:"วงกลมรัศมี 5 ซม. เส้นรอบวงเท่าใด (π ≈ 3.14)",a:"31.4 ซม.",choices:["15.7 ซม.","25.1 ซม.","31.4 ซม.","78.5 ซม."],ex:"C = 2πr = 2 × 3.14 × 5 = 31.4",topic:"เรขาคณิต",lv:"ม.1"},
+  {q:"รูปสามเหลี่ยมด้านเท่าด้านละ 6 ซม. มีพื้นที่เท่าใด",a:"9√3 ตร.ซม.",choices:["9√3 ตร.ซม.","18 ตร.ซม.","6√3 ตร.ซม.","12 ตร.ซม."],ex:"A = (√3/4)a² = (√3/4) × 36 = 9√3",topic:"เรขาคณิต",lv:"ม.4"},
+  // ลำดับและอนุกรม
+  {q:"ลำดับเลขคณิต 3, 7, 11, 15, ... พจน์ที่ 10 มีค่าเท่าใด",a:"39",choices:["33","36","39","43"],ex:"a₁₀ = 3 + (10−1)×4 = 39",topic:"ลำดับและอนุกรม",lv:"ม.5"},
+  {q:"ลำดับเรขาคณิต 2, 6, 18, 54, ... พจน์ที่ 5 มีค่าเท่าใด",a:"162",choices:["108","162","243","324"],ex:"a₅ = 2 × 3⁴ = 162",topic:"ลำดับและอนุกรม",lv:"ม.5"},
+  {q:"ผลรวม 1 + 2 + 3 + ... + 20 มีค่าเท่าใด",a:"210",choices:["190","200","210","220"],ex:"S = n(n+1)/2 = 20×21/2 = 210",topic:"ลำดับและอนุกรม",lv:"ม.5"},
+  {q:"ลำดับเลขคณิต พจน์แรก 2 ผลต่างร่วม 5 พจน์ที่ 8 มีค่าเท่าใด",a:"37",choices:["32","35","37","42"],ex:"a₈ = 2 + 7×5 = 37",topic:"ลำดับและอนุกรม",lv:"ม.5"},
+  {q:"2 + 4 + 8 + 16 + ... + 512 มีกี่พจน์",a:"9",choices:["7","8","9","10"],ex:"aₙ = 2ⁿ = 512 = 2⁹ → 9 พจน์",topic:"ลำดับและอนุกรม",lv:"ม.5"},
+  {q:"ลำดับเรขาคณิต 5, 10, 20, ... ผลรวม 6 พจน์แรกมีค่าเท่าใด",a:"315",choices:["155","315","625","320"],ex:"S₆ = 5(2⁶−1)/(2−1) = 5×63 = 315",topic:"ลำดับและอนุกรม",lv:"ม.5"},
+  // สถิติ
+  {q:"ค่าเฉลี่ยของ 4, 8, 6, 10, 12 เป็นเท่าใด",a:"8",choices:["6","7","8","10"],ex:"(4+8+6+10+12) ÷ 5 = 40 ÷ 5 = 8",topic:"สถิติ",lv:"ม.3"},
+  {q:"มัธยฐานของ 3, 7, 1, 9, 5 เป็นเท่าใด",a:"5",choices:["3","5","6","7"],ex:"เรียงลำดับ: 1,3,5,7,9 → มัธยฐาน = 5",topic:"สถิติ",lv:"ม.3"},
+  {q:"ฐานนิยมของ 2, 3, 5, 3, 7, 3, 8 เป็นเท่าใด",a:"3",choices:["2","3","5","7"],ex:"3 ปรากฏ 3 ครั้ง (มากที่สุด) → ฐานนิยม = 3",topic:"สถิติ",lv:"ม.3"},
+  {q:"พิสัยของข้อมูล 12, 8, 15, 20, 5 เป็นเท่าใด",a:"15",choices:["8","12","15","20"],ex:"พิสัย = สูงสุด − ต่ำสุด = 20 − 5 = 15",topic:"สถิติ",lv:"ม.3"},
+  {q:"ข้อมูล 4 จำนวน มีค่าเฉลี่ย 10 ถ้าเพิ่มข้อมูล 30 เข้าไป ค่าเฉลี่ยใหม่เป็นเท่าใด",a:"14",choices:["10","12","14","15"],ex:"ผลรวมเดิม=40, ผลรวมใหม่=70, เฉลี่ย=70/5=14",topic:"สถิติ",lv:"ม.4"},
+  {q:"ส่วนเบี่ยงเบนมาตรฐานของ 2, 4, 4, 4, 5, 5, 7, 9 เป็นเท่าใด",a:"2",choices:["1","2","3","4"],ex:"ค่าเฉลี่ย=5, ความแปรปรวน=32/8=4, SD=√4=2",topic:"สถิติ",lv:"ม.5"},
+  {q:"ค่ากลางชั้น 5 (ความถี่ 3), 10 (ความถี่ 5), 15 (ความถี่ 2) ค่าเฉลี่ยเป็นเท่าใด",a:"9.5",choices:["8.5","9.5","10","10.5"],ex:"(5×3+10×5+15×2)÷10 = 95÷10 = 9.5",topic:"สถิติ",lv:"ม.4"},
+  // ความน่าจะเป็น
+  {q:"โยนลูกเต๋า 1 ลูก ความน่าจะเป็นที่ได้เลขคู่เป็นเท่าใด",a:"1/2",choices:["1/6","1/3","1/2","2/3"],ex:"เลขคู่: {2,4,6} → P = 3/6 = 1/2",topic:"ความน่าจะเป็น",lv:"ม.3"},
+  {q:"สุ่มหยิบไพ่ 1 ใบจาก 52 ใบ ความน่าจะเป็นที่ได้ไพ่โพดำเป็นเท่าใด",a:"1/4",choices:["1/2","1/4","1/13","1/52"],ex:"โพดำมี 13 ใบ → P = 13/52 = 1/4",topic:"ความน่าจะเป็น",lv:"ม.5"},
+  {q:"โยนลูกเต๋า 2 ลูก ความน่าจะเป็นที่ผลรวมเป็น 7 เป็นเท่าใด",a:"1/6",choices:["1/12","1/9","1/6","1/4"],ex:"คู่ที่รวม 7: (1,6)(2,5)(3,4)(4,3)(5,2)(6,1)=6 คู่ → P=6/36=1/6",topic:"ความน่าจะเป็น",lv:"ม.5"},
+  {q:"กล่องมีลูกแดง 3 ลูก น้ำเงิน 2 ลูก หยิบ 1 ลูก P(แดง) เป็นเท่าใด",a:"3/5",choices:["1/3","2/5","3/5","2/3"],ex:"P = 3/(3+2) = 3/5",topic:"ความน่าจะเป็น",lv:"ม.3"},
+  {q:"โยนเหรียญ 2 เหรียญ ความน่าจะเป็นที่ได้หัวอย่างน้อย 1 เหรียญเป็นเท่าใด",a:"3/4",choices:["1/4","1/2","3/4","1"],ex:"P = 1 − P(ไม่มีหัว) = 1 − 1/4 = 3/4",topic:"ความน่าจะเป็น",lv:"ม.5"},
+  // เลขยกกำลัง
+  {q:"2³ × 2⁴ มีค่าเท่าใด",a:"128",choices:["32","64","128","256"],ex:"2^(3+4) = 2⁷ = 128",topic:"เลขยกกำลัง",lv:"ม.2"},
+  {q:"(3²)³ มีค่าเท่าใด",a:"729",choices:["27","243","729","6561"],ex:"3^(2×3) = 3⁶ = 729",topic:"เลขยกกำลัง",lv:"ม.2"},
+  {q:"2⁻³ มีค่าเท่าใด",a:"1/8",choices:["1/6","1/8","1/4","8"],ex:"2⁻³ = 1/2³ = 1/8",topic:"เลขยกกำลัง",lv:"ม.4"},
+  {q:"√144 มีค่าเท่าใด",a:"12",choices:["10","11","12","14"],ex:"12² = 144 → √144 = 12",topic:"เลขยกกำลัง",lv:"ม.2"},
+  {q:"∛27 มีค่าเท่าใด",a:"3",choices:["3","6","9","27"],ex:"3³ = 27 → ∛27 = 3",topic:"เลขยกกำลัง",lv:"ม.2"},
+  // ตรีโกณมิติ
+  {q:"sin 30° มีค่าเท่าใด",a:"1/2",choices:["0","1/2","√3/2","1"],ex:"sin 30° = 1/2 (ค่ามาตรฐาน)",topic:"ตรีโกณมิติ",lv:"ม.5"},
+  {q:"cos 60° มีค่าเท่าใด",a:"1/2",choices:["0","1/2","√3/2","1"],ex:"cos 60° = 1/2 (ค่ามาตรฐาน)",topic:"ตรีโกณมิติ",lv:"ม.5"},
+  {q:"tan 45° มีค่าเท่าใด",a:"1",choices:["0","√3/3","1","√3"],ex:"tan 45° = sin45°/cos45° = 1",topic:"ตรีโกณมิติ",lv:"ม.5"},
+  {q:"sin²θ + cos²θ มีค่าเท่าใด",a:"1",choices:["0","1/2","1","2"],ex:"เอกลักษณ์ตรีโกณมิติพื้นฐาน: sin²θ + cos²θ = 1",topic:"ตรีโกณมิติ",lv:"ม.5"},
+  {q:"ถ้า sin θ = 3/5 แล้ว cos θ มีค่าเท่าใด (θ อยู่จตุภาคที่ 1)",a:"4/5",choices:["3/5","4/5","5/4","5/3"],ex:"cos θ = √(1−9/25) = √(16/25) = 4/5",topic:"ตรีโกณมิติ",lv:"ม.5"},
+  // เซต
+  {q:"A = {1,2,3,4} และ B = {3,4,5,6} แล้ว A∩B เป็นเซตใด",a:"{3,4}",choices:["{1,2}","{3,4}","{5,6}","{1,2,5,6}"],ex:"A∩B คือสมาชิกที่อยู่ในทั้ง A และ B = {3,4}",topic:"เซต",lv:"ม.4"},
+  {q:"A = {1,2,3} และ B = {2,3,4} แล้ว n(A∪B) เป็นเท่าใด",a:"4",choices:["3","4","5","6"],ex:"A∪B = {1,2,3,4} มี 4 สมาชิก",topic:"เซต",lv:"ม.4"},
+  {q:"n(A)=10, n(B)=8, n(A∩B)=3 แล้ว n(A∪B) เป็นเท่าใด",a:"15",choices:["13","15","18","21"],ex:"n(A∪B) = 10+8−3 = 15",topic:"เซต",lv:"ม.4"},
+  {q:"จำนวนสับเซตทั้งหมดของ A = {a, b, c} มีกี่เซต",a:"8",choices:["3","6","8","9"],ex:"จำนวนสับเซต = 2ⁿ = 2³ = 8",topic:"เซต",lv:"ม.4"},
+  // แคลคูลัส
+  {q:"อนุพันธ์ของ f(x) = x³ คือ",a:"3x²",choices:["x²","3x²","3x","x³"],ex:"f'(x) = 3x^(3−1) = 3x²",topic:"แคลคูลัส",lv:"ม.6"},
+  {q:"อนุพันธ์ของ f(x) = 5x² + 3x คือ",a:"10x + 3",choices:["5x + 3","10x + 3","10x²","5x² + 3"],ex:"f'(x) = 10x + 3",topic:"แคลคูลัส",lv:"ม.6"},
+  {q:"∫2x dx เท่ากับ",a:"x² + C",choices:["x + C","x² + C","2x² + C","x²/2 + C"],ex:"∫2x dx = 2 × x²/2 + C = x² + C",topic:"แคลคูลัส",lv:"ม.6"},
+  {q:"∫₀¹ x dx เท่ากับ",a:"1/2",choices:["0","1/4","1/2","1"],ex:"[x²/2]₀¹ = 1/2 − 0 = 1/2",topic:"แคลคูลัส",lv:"ม.6"},
+];
+
+function mathFiltered() {
+  const base = mathActiveCat === "ทั้งหมด" ? [...MATH_DATA] : MATH_DATA.filter(q => q.topic === mathActiveCat);
+  return shuffle(base);
+}
+
+function setMode(m) {
+  mathMode = (m === 'math');
+  document.getElementById('modeVocab').classList.toggle('active', !mathMode);
+  document.getElementById('modeMath').classList.toggle('active', mathMode);
+  document.getElementById('vocabArea').classList.toggle('hidden', mathMode);
+  document.getElementById('mathArea').classList.toggle('hidden', !mathMode);
+  if (mathMode) { mathActiveCat = 'ทั้งหมด'; buildMathCats(); mathRestart(); }
+  else { buildCats(); restart(); }
+}
+
+function buildMathCats() {
+  const c = document.getElementById('cats');
+  c.innerHTML = '';
+  MATH_CATS.forEach(name => {
+    const b = document.createElement('button');
+    b.className = 'cat-btn' + (name === mathActiveCat ? ' active' : '');
+    b.textContent = name;
+    b.onclick = () => {
+      mathActiveCat = name;
+      document.querySelectorAll('.cat-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      mathRestart();
+    };
+    c.appendChild(b);
+  });
+}
+
+function mathRestart() {
+  mathDeck = mathFiltered();
+  mathIdx = 0; mathDone = false;
+  mathAnswered = new Array(mathDeck.length).fill(null);
+  mathRender();
+}
+
+function mathShuffle() {
+  mathDeck = mathFiltered();
+  mathIdx = 0; mathDone = false;
+  mathAnswered = new Array(mathDeck.length).fill(null);
+  mathRender();
+}
+
+function mathCountCorrect() { return mathAnswered.filter(a => a && a.correct).length; }
+function mathCountWrong()   { return mathAnswered.filter(a => a && !a.correct).length; }
+function mathCountAnswered(){ return mathAnswered.filter(a => a !== null).length; }
+function mathIsAllAnswered(){ return mathDeck.length > 0 && mathAnswered.every(a => a !== null); }
+
+function mathFindNextUnanswered(cur) {
+  for (let off = 1; off <= mathDeck.length; off++) {
+    const i = (cur + off) % mathDeck.length;
+    if (mathAnswered[i] === null) return i;
+  }
+  return -1;
+}
+
+function mathRender() {
+  if (mathIsAllAnswered()) { mathShowDone(); return; }
+  if (mathIdx < 0 || mathIdx >= mathDeck.length) mathIdx = 0;
+  const q = mathDeck[mathIdx];
+  document.getElementById('mTopic').textContent = q.topic;
+  document.getElementById('mLevel').textContent = q.lv;
+  document.getElementById('mQNum').textContent = 'ข้อ ' + (mathIdx + 1) + '/' + mathDeck.length;
+  document.getElementById('mQuestion').textContent = q.q;
+
+  const answered = mathCountAnswered();
+  const pct = mathDeck.length > 0 ? Math.round(answered / mathDeck.length * 100) : 0;
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progLabel').textContent = answered + ' / ' + mathDeck.length;
+  document.getElementById('progPct').textContent = pct + '%';
+  document.getElementById('mStK').textContent = mathCountCorrect();
+  document.getElementById('mStD').textContent = mathCountWrong();
+  document.getElementById('mStL').textContent = mathDeck.length - answered;
+  document.getElementById('mathDoneBox').classList.add('hidden');
+  document.getElementById('mathCard').classList.remove('hidden');
+
+  const state = mathAnswered[mathIdx];
+  const choicesEl = document.getElementById('mathChoices');
+  choicesEl.innerHTML = '';
+  ['A','B','C','D'].forEach((lbl, i) => {
+    const choice = q.choices[i];
+    const btn = document.createElement('button');
+    btn.className = 'math-choice-btn';
+    btn.innerHTML = `<span class="choice-label">${lbl}</span><span class="choice-text">${esc(choice)}</span>`;
+    if (state !== null) {
+      if (choice === q.a) btn.classList.add('choice-correct');
+      else if (choice === state.selected) btn.classList.add('choice-wrong');
+      btn.disabled = true;
+    } else {
+      btn.onclick = () => mathAnswer(choice);
+    }
+    choicesEl.appendChild(btn);
+  });
+
+  const explainEl = document.getElementById('mathExplain');
+  const nextBtn  = document.getElementById('mathNextBtn');
+  if (state !== null) {
+    document.getElementById('mAnswerResult').textContent = state.correct ? '✓ ถูกต้อง!' : '✗ ไม่ถูก — คำตอบที่ถูกคือ: ' + q.a;
+    document.getElementById('mAnswerResult').className = 'answer-result ' + (state.correct ? 'result-correct' : 'result-wrong');
+    document.getElementById('mExplain').textContent = q.ex;
+    explainEl.classList.remove('hidden');
+    nextBtn.classList.remove('hidden');
+  } else {
+    explainEl.classList.add('hidden');
+    nextBtn.classList.add('hidden');
+  }
+}
+
+function mathAnswer(choice) {
+  if (mathAnswered[mathIdx] !== null) return;
+  mathAnswered[mathIdx] = { selected: choice, correct: choice === mathDeck[mathIdx].a };
+  mathRender();
+}
+
+function mathNext() {
+  if (mathIsAllAnswered()) { mathShowDone(); return; }
+  const next = mathFindNextUnanswered(mathIdx);
+  if (next !== -1) { mathIdx = next; }
+  mathRender();
+}
+
+function mathGo(d) {
+  if (mathDone) return;
+  mathIdx = Math.max(0, Math.min(mathDeck.length - 1, mathIdx + d));
+  mathRender();
+}
+
+function mathShowDone() {
+  mathDone = true;
+  const k = mathCountCorrect(), nk = mathCountWrong();
+  document.getElementById('mathCard').classList.add('hidden');
+  document.getElementById('mathChoices').innerHTML = '';
+  document.getElementById('mathExplain').classList.add('hidden');
+  document.getElementById('mathNextBtn').classList.add('hidden');
+  document.getElementById('progFill').style.width = '100%';
+  document.getElementById('progLabel').textContent = mathDeck.length + ' / ' + mathDeck.length;
+  document.getElementById('progPct').textContent = '100%';
+  document.getElementById('mStK').textContent = k;
+  document.getElementById('mStD').textContent = nk;
+  document.getElementById('mStL').textContent = 0;
+  const pct = mathDeck.length > 0 ? Math.round(k / mathDeck.length * 100) : 0;
+  document.getElementById('mathDoneSub').textContent = 'ถูก ' + k + ' ข้อ · ผิด ' + nk + ' ข้อ · ' + pct + '% จาก ' + mathDeck.length + ' ข้อ';
+  document.getElementById('mathDoneBox').classList.remove('hidden');
+}
+
+// ── init ──
+(async () => {
+  await loadVocabCSV();
+  initFirebase();
+  buildCats();
+  restart();
+})();
+</script>
+</body>
+</html>
