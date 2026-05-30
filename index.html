@@ -87,6 +87,45 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg3)}
 .res-btn:active{transform:scale(.97)}
 .btn-know{background:var(--bg-ok);color:var(--tx-ok);border-color:var(--bd-ok)}
 .btn-dontknow{background:var(--bg-err);color:var(--tx-err);border-color:var(--bd-err)}
+.btn-know-active{outline:2.5px solid var(--tx-ok);outline-offset:2px}
+.btn-dontknow-active{outline:2.5px solid var(--tx-err);outline-offset:2px}
+
+/* Card status badge */
+.card-status-badge{position:absolute;top:10px;right:10px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:99px;z-index:10;pointer-events:none;letter-spacing:.3px;border-width:.5px;border-style:solid}
+.badge-known{background:var(--bg-ok);color:var(--tx-ok);border-color:var(--bd-ok)}
+.badge-notKnown{background:var(--bg-err);color:var(--tx-err);border-color:var(--bd-err)}
+
+/* Expandable session table */
+.hist-session-header{cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px}
+.hist-expand-icon{font-size:12px;color:var(--tx3);transition:transform .2s}
+.hist-session.expanded .hist-expand-icon{transform:rotate(90deg)}
+.hist-table-wrap{display:none;margin-top:8px;overflow-x:auto}
+.hist-session.expanded .hist-table-wrap{display:block}
+.hist-table{width:100%;border-collapse:collapse;font-size:12px}
+.hist-table th{text-align:left;padding:5px 6px;color:var(--tx3);font-weight:400;border-bottom:.5px solid var(--bd2)}
+.hist-table td{padding:5px 6px;color:var(--tx2);border-bottom:.5px solid var(--bd2);vertical-align:top}
+.hist-table tr:last-child td{border-bottom:none}
+.td-status-known{color:var(--tx-ok);font-weight:500}
+.td-status-notKnown{color:var(--tx-err);font-weight:500}
+
+/* Per-word stat bar */
+.word-stat-item{background:var(--bg2);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:5px;border:.5px solid var(--bd2)}
+.word-stat-label{font-size:13px;font-weight:500;color:var(--tx)}
+.word-stat-meaning{font-size:12px;color:var(--tx2)}
+.word-stat-counts{font-size:11px;color:var(--tx3)}
+.word-stat-bar{width:100%;height:8px;border-radius:99px;overflow:hidden;background:var(--bd2);display:flex}
+.bar-known{height:100%;background:var(--tx-ok);transition:width .4s ease}
+.bar-notknown{height:100%;background:var(--tx-err);transition:width .4s ease}
+
+/* Trend chart */
+.trend-chart{display:flex;flex-direction:column;gap:8px;padding:4px 0}
+.trend-item{display:flex;align-items:center;gap:8px}
+.trend-date{font-size:11px;color:var(--tx3);min-width:80px}
+.trend-bar-wrap{flex:1;height:20px;background:var(--bd2);border-radius:99px;overflow:hidden}
+.trend-bar-fill{height:100%;background:var(--tx-info);border-radius:99px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;transition:width .4s ease}
+.trend-bar-pct{font-size:10px;font-weight:600;color:#fff;white-space:nowrap}
+.trend-dot{width:8px;height:8px;border-radius:50%;background:var(--tx-info);border:2px solid var(--bg);flex-shrink:0}
+
 .nav-row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
 .nav-btn{padding:11px;border-radius:var(--r);border:.5px solid var(--bd);background:var(--bg2);color:var(--tx2);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .15s}
 .nav-btn:active{transform:scale(.97)}
@@ -175,9 +214,14 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
   <div class="topbar">
     <div class="topbar-row">
       <div class="appname">Vocab<span>Cards</span> ม.ต้น–ม.ปลาย</div>
-      <button class="import-btn" onclick="openImport()">
-        <i class="ti ti-plus"></i> เพิ่มคำศัพท์
-      </button>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="import-btn" onclick="openHistoryModal()">
+          <i class="ti ti-chart-bar"></i> ประวัติ
+        </button>
+        <button class="import-btn" onclick="openImport()">
+          <i class="ti ti-plus"></i> เพิ่มคำศัพท์
+        </button>
+      </div>
     </div>
     <div class="cats" id="cats"></div>
   </div>
@@ -211,6 +255,7 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
         <div class="swipe-label swipe-know" id="lblKnow"><i class="ti ti-check"></i> รู้แล้ว!</div>
         <div class="swipe-label swipe-dontknow" id="lblDont"><i class="ti ti-x"></i> ยังไม่รู้</div>
       </div>
+      <div class="card-status-badge hidden" id="cardStatusBadge"></div>
     </div>
 
     <div class="swipe-hint" id="swipeHint">
@@ -224,8 +269,8 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
     </button>
 
     <div class="result-row hidden" id="resultRow">
-      <button class="res-btn btn-dontknow" onclick="mark(false)"><i class="ti ti-x"></i> ยังไม่รู้</button>
-      <button class="res-btn btn-know" onclick="mark(true)"><i class="ti ti-check"></i> รู้แล้ว!</button>
+      <button class="res-btn btn-dontknow" id="btnDontKnow" onclick="mark(false)"><i class="ti ti-x"></i> ยังไม่รู้</button>
+      <button class="res-btn btn-know" id="btnKnow" onclick="mark(true)"><i class="ti ti-check"></i> รู้แล้ว!</button>
     </div>
 
     <div class="nav-row">
@@ -244,7 +289,7 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
       <div class="done-title">เสร็จแล้ว!</div>
       <div class="done-sub" id="doneSub"></div>
       <button class="done-restart" onclick="restart()"><i class="ti ti-refresh"></i> เริ่มใหม่</button>
-      <button class="done-restart" style="background:var(--bg2);color:var(--tx2);border-color:var(--bd)" onclick="openHistory()"><i class="ti ti-chart-bar"></i> ดูประวัติ</button>
+      <button class="done-restart" style="background:var(--bg2);color:var(--tx2);border-color:var(--bd)" onclick="openHistoryModal()"><i class="ti ti-chart-bar"></i> ดูประวัติ</button>
     </div>
   </div>
 </div>
@@ -261,7 +306,6 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
       <button class="modal-tab" onclick="switchTab('paste')">วางข้อความ</button>
       <button class="modal-tab" onclick="switchTab('file')">ไฟล์ CSV/TXT</button>
       <button class="modal-tab" onclick="switchTab('manage')">จัดการ</button>
-      <button class="modal-tab" onclick="switchTab('history')">ประวัติ</button>
     </div>
     <div class="modal-body">
 
@@ -374,11 +418,41 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
         <button class="action-btn danger hidden" id="clear-btn" onclick="clearAllCustom()"><i class="ti ti-trash"></i> ลบทั้งหมด</button>
       </div>
 
-      <!-- Tab: History -->
-      <div class="tab-panel" id="tab-history">
-        <div class="empty-state" id="hist-empty">ยังไม่มีประวัติการทำแบบทดสอบ</div>
-        <div id="hist-list" style="display:flex;flex-direction:column;gap:10px"></div>
-        <button class="action-btn danger hidden" id="hist-clear-btn" onclick="clearHistory()"><i class="ti ti-trash"></i> ลบประวัติทั้งหมด</button>
+    </div>
+  </div>
+</div>
+
+<!-- History Modal -->
+<div class="modal-backdrop" id="histModalBackdrop" onclick="handleHistBackdropClick(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">ประวัติการทำแบบทดสอบ</div>
+      <button class="modal-close" onclick="closeHistoryModal()"><i class="ti ti-x" style="font-size:14px"></i></button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchHistTab('sessions')">รายรอบ</button>
+      <button class="modal-tab" onclick="switchHistTab('perword')">รายคำ</button>
+      <button class="modal-tab" onclick="switchHistTab('trend')">แนวโน้ม</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Sub-tab: Sessions -->
+      <div class="tab-panel active" id="histtab-sessions">
+        <div class="empty-state" id="hist2-empty">ยังไม่มีประวัติการทำแบบทดสอบ</div>
+        <div id="hist2-list" style="display:flex;flex-direction:column;gap:10px"></div>
+        <button class="action-btn danger hidden" id="hist2-clear-btn" onclick="clearHistory2()"><i class="ti ti-trash"></i> ลบประวัติทั้งหมด</button>
+      </div>
+
+      <!-- Sub-tab: Per Word -->
+      <div class="tab-panel" id="histtab-perword">
+        <div class="empty-state" id="perword-empty">ยังไม่มีข้อมูล</div>
+        <div id="perword-list" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
+      <!-- Sub-tab: Trend -->
+      <div class="tab-panel" id="histtab-trend">
+        <div class="empty-state" id="trend-empty">ต้องมีอย่างน้อย 2 รอบ</div>
+        <div id="trend-chart" class="trend-chart"></div>
       </div>
 
     </div>
@@ -473,8 +547,13 @@ const ALL = [
 // ── state ──
 const BASE_CATS = ["ทั้งหมด","คำศัพท์ทั่วไป","Phrasal Verbs","Idioms","Verb Forms"];
 let activeCat = "ทั้งหมด";
-let deck = [], idx = 0, known = 0, notKnown = 0, flipped = false, done = false;
-let sessionKnown = [], sessionNotKnown = [];
+let deck = [], idx = 0, flipped = false, done = false;
+let cardStatus = []; // null | 'known' | 'notKnown'
+
+function countKnown() { return cardStatus.filter(s => s === 'known').length; }
+function countNotKnown() { return cardStatus.filter(s => s === 'notKnown').length; }
+function countAnswered() { return cardStatus.filter(s => s !== null).length; }
+function isAllAnswered() { return deck.length > 0 && cardStatus.every(s => s !== null); }
 
 // ── custom vocab (localStorage) ──
 function loadCustom() {
@@ -520,9 +599,18 @@ function shuffle(a) {
   return a;
 }
 
+function findNextUnanswered(currentIdx) {
+  for (let offset = 1; offset <= deck.length; offset++) {
+    const i = (currentIdx + offset) % deck.length;
+    if (cardStatus[i] === null) return i;
+  }
+  return -1;
+}
+
 // ── render ──
 function render() {
-  if (idx >= deck.length) { showDone(); return; }
+  if (isAllAnswered()) { showDone(); return; }
+  if (idx < 0 || idx >= deck.length) idx = 0;
   const w = deck[idx];
   document.getElementById('cEn').textContent = w.en;
   document.getElementById('cPh').textContent = w.ph || '';
@@ -530,22 +618,43 @@ function render() {
   document.getElementById('cTh').textContent = w.th;
   document.getElementById('cEx').textContent = w.ex ? '"' + w.ex + '"' : '';
   document.getElementById('cExTh').textContent = w.exth || '';
-  const ci = document.getElementById('cardInner');
-  ci.style.transition = 'transform .45s cubic-bezier(.4,0,.2,1)';
-  ci.classList.remove('flipped');
-  document.getElementById('revealBtn').classList.remove('hidden');
-  document.getElementById('resultRow').classList.add('hidden');
-  flipped = false;
-  resetDrag();
-  const pct = Math.round(idx / deck.length * 100);
+
+  const answered = countAnswered();
+  const pct = deck.length > 0 ? Math.round(answered / deck.length * 100) : 0;
   document.getElementById('progFill').style.width = pct + '%';
-  document.getElementById('progLabel').textContent = (idx + 1) + ' / ' + deck.length;
+  document.getElementById('progLabel').textContent = answered + ' / ' + deck.length;
   document.getElementById('progPct').textContent = pct + '%';
-  document.getElementById('stK').textContent = known;
-  document.getElementById('stD').textContent = notKnown;
-  document.getElementById('stL').textContent = deck.length - idx;
+  document.getElementById('stK').textContent = countKnown();
+  document.getElementById('stD').textContent = countNotKnown();
+  document.getElementById('stL').textContent = deck.length - answered;
   document.getElementById('doneBox').classList.add('hidden');
   document.getElementById('cardWrap').classList.remove('hidden');
+
+  const status = cardStatus[idx];
+  const ci = document.getElementById('cardInner');
+
+  if (status !== null) {
+    ci.style.transition = 'none';
+    ci.classList.add('flipped');
+    flipped = true;
+    document.getElementById('revealBtn').classList.add('hidden');
+    document.getElementById('resultRow').classList.remove('hidden');
+    document.getElementById('btnKnow').classList.toggle('btn-know-active', status === 'known');
+    document.getElementById('btnDontKnow').classList.toggle('btn-dontknow-active', status === 'notKnown');
+    document.getElementById('cardStatusBadge').textContent = status === 'known' ? '✓ รู้แล้ว' : '✗ ยังไม่รู้';
+    document.getElementById('cardStatusBadge').className = 'card-status-badge badge-' + status;
+    document.getElementById('cardStatusBadge').classList.remove('hidden');
+  } else {
+    ci.style.transition = 'transform .45s cubic-bezier(.4,0,.2,1)';
+    ci.classList.remove('flipped');
+    flipped = false;
+    document.getElementById('revealBtn').classList.remove('hidden');
+    document.getElementById('resultRow').classList.add('hidden');
+    document.getElementById('btnKnow').classList.remove('btn-know-active');
+    document.getElementById('btnDontKnow').classList.remove('btn-dontknow-active');
+    document.getElementById('cardStatusBadge').classList.add('hidden');
+  }
+  resetDrag();
 }
 
 function flip() {
@@ -557,23 +666,35 @@ function flip() {
 }
 
 function mark(k) {
-  const w = deck[idx];
-  if (k) { known++; sessionKnown.push({en: w.en, th: w.th}); }
-  else { notKnown++; sessionNotKnown.push({en: w.en, th: w.th}); }
-  idx++; render();
+  cardStatus[idx] = k ? 'known' : 'notKnown';
+  if (isAllAnswered()) { showDone(); return; }
+  const next = findNextUnanswered(idx);
+  if (next !== -1) { idx = next; }
+  render();
 }
-function skip() { idx++; render(); }
-function go(d) { idx = Math.max(0, Math.min(deck.length - 1, idx + d)); flipped = false; render(); }
-function shuffleAll() { deck = shuffle(filtered()); idx = 0; known = 0; notKnown = 0; done = false; sessionKnown = []; sessionNotKnown = []; render(); }
+function go(d) {
+  if (done) return;
+  idx = Math.max(0, Math.min(deck.length - 1, idx + d));
+  flipped = false;
+  render();
+}
+function shuffleAll() {
+  deck = shuffle(filtered());
+  idx = 0; flipped = false; done = false;
+  cardStatus = new Array(deck.length).fill(null);
+  render();
+}
 
 function showDone() {
   done = true;
+  const sessionKnown = deck.filter((_, i) => cardStatus[i] === 'known').map(w => ({en: w.en, th: w.th}));
+  const sessionNotKnown = deck.filter((_, i) => cardStatus[i] === 'notKnown').map(w => ({en: w.en, th: w.th}));
   saveHistory({
     date: new Date().toISOString(),
     cat: activeCat,
     total: deck.length,
-    known: [...sessionKnown],
-    notKnown: [...sessionNotKnown]
+    known: sessionKnown,
+    notKnown: sessionNotKnown
   });
   document.getElementById('cardWrap').classList.add('hidden');
   document.getElementById('revealBtn').classList.add('hidden');
@@ -581,14 +702,20 @@ function showDone() {
   document.getElementById('progFill').style.width = '100%';
   document.getElementById('progLabel').textContent = deck.length + ' / ' + deck.length;
   document.getElementById('progPct').textContent = '100%';
-  document.getElementById('stK').textContent = known;
-  document.getElementById('stD').textContent = notKnown;
+  const k = countKnown(), nk = countNotKnown();
+  document.getElementById('stK').textContent = k;
+  document.getElementById('stD').textContent = nk;
   document.getElementById('stL').textContent = 0;
-  document.getElementById('doneSub').textContent = 'รู้แล้ว ' + known + ' คำ · ยังต้องฝึกอีก ' + notKnown + ' คำ จาก ' + deck.length + ' คำทั้งหมด';
+  document.getElementById('doneSub').textContent = 'รู้แล้ว ' + k + ' คำ · ยังต้องฝึกอีก ' + nk + ' คำ จาก ' + deck.length + ' คำทั้งหมด';
   document.getElementById('doneBox').classList.remove('hidden');
 }
 
-function restart() { deck = shuffle(filtered()); idx = 0; known = 0; notKnown = 0; done = false; sessionKnown = []; sessionNotKnown = []; render(); }
+function restart() {
+  deck = shuffle(filtered());
+  idx = 0; flipped = false; done = false;
+  cardStatus = new Array(deck.length).fill(null);
+  render();
+}
 
 // ── swipe gestures ──
 const H_THR = 72;
@@ -658,20 +785,33 @@ function handleCardTap() {
 let pendingFile = null;
 
 function openImport()  { document.getElementById('modalBackdrop').classList.add('open'); switchTab('manual'); }
-function openHistory() { document.getElementById('modalBackdrop').classList.add('open'); switchTab('history'); }
 function closeImport() { document.getElementById('modalBackdrop').classList.remove('open'); }
 function handleBackdropClick(e) { if (e.target.id === 'modalBackdrop') closeImport(); }
 
-const TAB_IDS = ['manual','paste','file','manage','history'];
-const TAB_TITLES = {manual:'เพิ่มคำศัพท์',paste:'เพิ่มคำศัพท์',file:'นำเข้าไฟล์',manage:'จัดการคำศัพท์',history:'ประวัติการทำแบบทดสอบ'};
+function openHistoryModal() { document.getElementById('histModalBackdrop').classList.add('open'); switchHistTab('sessions'); }
+function closeHistoryModal() { document.getElementById('histModalBackdrop').classList.remove('open'); }
+function handleHistBackdropClick(e) { if (e.target.id === 'histModalBackdrop') closeHistoryModal(); }
+
+const HIST_TAB_IDS = ['sessions','perword','trend'];
+function switchHistTab(name) {
+  document.querySelectorAll('#histModalBackdrop .tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#histModalBackdrop .modal-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('histtab-' + name).classList.add('active');
+  document.querySelectorAll('#histModalBackdrop .modal-tab')[HIST_TAB_IDS.indexOf(name)].classList.add('active');
+  if (name === 'sessions') refreshSessions();
+  if (name === 'perword')  refreshPerWord();
+  if (name === 'trend')    refreshTrend();
+}
+
+const TAB_IDS = ['manual','paste','file','manage'];
+const TAB_TITLES = {manual:'เพิ่มคำศัพท์',paste:'เพิ่มคำศัพท์',file:'นำเข้าไฟล์',manage:'จัดการคำศัพท์'};
 function switchTab(name) {
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.modal-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#modalBackdrop .tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#modalBackdrop .modal-tab').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
-  document.querySelectorAll('.modal-tab')[TAB_IDS.indexOf(name)].classList.add('active');
-  document.querySelector('.modal-title').textContent = TAB_TITLES[name] || 'เพิ่มคำศัพท์';
+  document.querySelectorAll('#modalBackdrop .modal-tab')[TAB_IDS.indexOf(name)].classList.add('active');
+  document.querySelector('#modalBackdrop .modal-title').textContent = TAB_TITLES[name] || 'เพิ่มคำศัพท์';
   if (name === 'manage') refreshManage();
-  if (name === 'history') refreshHistory();
 }
 
 function showMsg(id, text, ok) {
@@ -812,33 +952,131 @@ function saveHistory(session) {
 function clearHistory() {
   if (!confirm('ลบประวัติการทำแบบทดสอบทั้งหมด?')) return;
   localStorage.removeItem('testHistory');
-  refreshHistory();
+  refreshSessions();
+}
+function clearHistory2() {
+  if (!confirm('ลบประวัติการทำแบบทดสอบทั้งหมด?')) return;
+  localStorage.removeItem('testHistory');
+  refreshSessions();
 }
 function formatDate(iso) {
   const d = new Date(iso);
   return d.toLocaleDateString('th-TH', {day:'numeric',month:'short',year:'numeric'}) + ' · ' +
          d.toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
 }
-function refreshHistory() {
+function toggleSession(headerEl) {
+  headerEl.closest('.hist-session').classList.toggle('expanded');
+}
+function refreshSessions() {
   const sessions = loadHistory();
-  const list = document.getElementById('hist-list');
-  const empty = document.getElementById('hist-empty');
-  const btn = document.getElementById('hist-clear-btn');
+  const list = document.getElementById('hist2-list');
+  const empty = document.getElementById('hist2-empty');
+  const btn = document.getElementById('hist2-clear-btn');
   empty.style.display = sessions.length ? 'none' : 'block';
   btn.classList.toggle('hidden', !sessions.length);
   list.innerHTML = '';
   sessions.forEach(s => {
-    const skipped = s.total - s.known.length - s.notKnown.length;
-    const knownStr = s.known.map(w => esc(w.en)).join(' · ') || '—';
-    const notKnownStr = s.notKnown.map(w => esc(w.en)).join(' · ') || '—';
+    const k = s.known.length;
+    const nk = s.notKnown.length;
+    const pct = s.total > 0 ? Math.round(k / s.total * 100) : 0;
+    const allWords = [
+      ...s.known.map(w => ({...w, status:'known'})),
+      ...s.notKnown.map(w => ({...w, status:'notKnown'}))
+    ];
+    const rows = allWords.map(w =>
+      `<tr><td>${esc(w.en)}</td><td>${esc(w.th)}</td><td class="td-status-${w.status}">${w.status === 'known' ? '✓ รู้' : '✗ ไม่รู้'}</td></tr>`
+    ).join('');
     const d = document.createElement('div');
     d.className = 'hist-session';
     d.innerHTML =
-      `<div class="hist-meta"><span class="hist-date">${formatDate(s.date)}</span><span class="hist-badge">${esc(s.cat)}</span></div>` +
-      `<div class="hist-score">รู้แล้ว <b style="color:var(--tx-ok)">${s.known.length}</b> · ยังไม่รู้ <b style="color:var(--tx-err)">${s.notKnown.length}</b>${skipped > 0 ? ` · ข้าม ${skipped}` : ''} <span style="color:var(--tx3)">/ ${s.total} คำ</span></div>` +
-      `<div class="hist-words"><span class="hist-ok">✓ รู้:</span> ${knownStr}</div>` +
-      `<div class="hist-words"><span class="hist-err">✗ ไม่รู้:</span> ${notKnownStr}</div>`;
+      `<div class="hist-session-header" onclick="toggleSession(this)">
+        <i class="ti ti-chevron-right hist-expand-icon"></i>
+        <div style="flex:1">
+          <div class="hist-meta">
+            <span class="hist-date">${formatDate(s.date)}</span>
+            <span class="hist-badge">${esc(s.cat)}</span>
+          </div>
+          <div class="hist-score">รู้ <b style="color:var(--tx-ok)">${k}</b> · ไม่รู้ <b style="color:var(--tx-err)">${nk}</b> · ${pct}% <span style="color:var(--tx3)">/ ${s.total} คำ</span></div>
+        </div>
+      </div>
+      <div class="hist-table-wrap">
+        <table class="hist-table">
+          <thead><tr><th>คำ</th><th>ความหมาย</th><th>สถานะ</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
     list.appendChild(d);
+  });
+}
+function refreshPerWord() {
+  const sessions = loadHistory();
+  const empty = document.getElementById('perword-empty');
+  const list = document.getElementById('perword-list');
+  list.innerHTML = '';
+  if (!sessions.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  const map = new Map();
+  sessions.forEach(s => {
+    s.known.forEach(w => {
+      const key = w.en.toLowerCase();
+      if (!map.has(key)) map.set(key, {en: w.en, th: w.th, known: 0, notKnown: 0});
+      map.get(key).known++;
+    });
+    s.notKnown.forEach(w => {
+      const key = w.en.toLowerCase();
+      if (!map.has(key)) map.set(key, {en: w.en, th: w.th, known: 0, notKnown: 0});
+      map.get(key).notKnown++;
+    });
+  });
+  const words = [...map.values()].sort((a, b) => {
+    const ra = a.notKnown / (a.known + a.notKnown);
+    const rb = b.notKnown / (b.known + b.notKnown);
+    return rb - ra || (b.notKnown + b.known) - (a.notKnown + a.known);
+  });
+  words.forEach(w => {
+    const total = w.known + w.notKnown;
+    const knownPct = total > 0 ? Math.round(w.known / total * 100) : 0;
+    const notKnownPct = 100 - knownPct;
+    const d = document.createElement('div');
+    d.className = 'word-stat-item';
+    d.innerHTML =
+      `<div class="word-stat-label">${esc(w.en)}</div>
+       <div class="word-stat-meaning">${esc(w.th)}</div>
+       <div class="word-stat-bar">
+         <div class="bar-notknown" style="width:${notKnownPct}%"></div>
+         <div class="bar-known" style="width:${knownPct}%"></div>
+       </div>
+       <div class="word-stat-counts">
+         <span style="color:var(--tx-err)">ไม่รู้ ${w.notKnown}</span>
+         <span style="color:var(--tx3)"> · </span>
+         <span style="color:var(--tx-ok)">รู้ ${w.known}</span>
+         <span style="color:var(--tx3)"> · รวม ${total} ครั้ง</span>
+       </div>`;
+    list.appendChild(d);
+  });
+}
+function refreshTrend() {
+  const sessions = loadHistory();
+  const empty = document.getElementById('trend-empty');
+  const chart = document.getElementById('trend-chart');
+  chart.innerHTML = '';
+  if (sessions.length < 2) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  const ordered = [...sessions].reverse();
+  ordered.forEach(s => {
+    const pct = s.total > 0 ? Math.round(s.known.length / s.total * 100) : 0;
+    const d = document.createElement('div');
+    d.className = 'trend-item';
+    d.innerHTML =
+      `<div class="trend-dot"></div>
+       <div class="trend-date">${formatDate(s.date).split(' · ')[0]}</div>
+       <div class="trend-bar-wrap">
+         <div class="trend-bar-fill" style="width:${pct}%">
+           ${pct >= 15 ? `<span class="trend-bar-pct">${pct}%</span>` : ''}
+         </div>
+       </div>
+       ${pct < 15 ? `<span style="font-size:10px;color:var(--tx3);min-width:28px">${pct}%</span>` : ''}`;
+    chart.appendChild(d);
   });
 }
 
