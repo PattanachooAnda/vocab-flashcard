@@ -6,9 +6,7 @@ on:
   workflow_dispatch:      # ให้ run ด้วยมือได้จาก GitHub UI
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
@@ -16,19 +14,13 @@ concurrency:
 
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      # สร้าง dist/ แยก แล้วเขียน Firebase config จริงลงไป (upload จาก dist/ ไม่ใช่ repo root)
+      # สร้าง dist/ พร้อม Firebase config จริงจาก secrets
       - name: Build dist with Firebase config
         env:
           FIREBASE_API_KEY:             ${{ secrets.FIREBASE_API_KEY }}
@@ -53,18 +45,12 @@ jobs:
             appId:             "${FIREBASE_APP_ID}"
           };
           CFGEOF
-          echo "dist/firebase-config.js written ($(wc -c < dist/firebase-config.js) bytes)"
-          echo "--- first line of dist/firebase-config.js ---"
-          head -1 dist/firebase-config.js
-          echo "--- files in dist/ ---"
-          ls dist/
-          echo "<!-- DIST_BUILD_OK -->" >> dist/index.html
+          echo "dist/firebase-config.js: $(wc -c < dist/firebase-config.js) bytes, first line: $(head -1 dist/firebase-config.js)"
 
-      - name: Upload site artifact
-        uses: actions/upload-pages-artifact@v3
+      # Push dist/ ไปยัง gh-pages branch โดยตรง (วิธีนี้ commit ไฟล์จริง ไม่ผ่าน artifact)
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: 'dist'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          force_orphan: true
