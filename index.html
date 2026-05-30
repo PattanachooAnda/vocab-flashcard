@@ -12,6 +12,8 @@
 <!-- Firebase SDK (Realtime Database) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<!-- Firebase config (gitignored — copy firebase-config.example.js → firebase-config.js) -->
+<script src="firebase-config.js"></script>
 <style>
 :root {
   --bg: #ffffff; --bg2: #f8f9fa; --bg3: #f3f4f6;
@@ -188,6 +190,12 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
 .section-lbl::after{content:'';flex:1;height:.5px;background:var(--bd)}
 .shared-item{display:flex;align-items:center;padding:8px 12px;background:var(--bg-info);border-radius:var(--r);gap:8px;border:.5px solid var(--bd-info)}
 .empty-state{font-size:14px;color:var(--tx3);text-align:center;padding:20px 0}
+
+/* sort controls */
+.sort-bar{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:2px 0}
+.sort-lbl{font-size:11px;color:var(--tx3);white-space:nowrap;flex-shrink:0}
+.sort-btn{font-size:11px;padding:4px 10px;border-radius:99px;border:.5px solid var(--bd);background:var(--bg2);color:var(--tx2);cursor:pointer;font-family:'Sarabun',sans-serif;white-space:nowrap;transition:all .15s}
+.sort-btn.active{background:var(--bg-info);color:var(--tx-info);border-color:var(--bd-info);font-weight:500}
 
 /* cross-nav */
 .nav-link{font-size:11px;color:var(--tx-info);cursor:pointer;background:none;border:none;padding:0;font-family:'Sarabun',sans-serif;text-decoration:underline;text-underline-offset:2px;flex-shrink:0;line-height:1}
@@ -456,6 +464,13 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
 
       <!-- Sub-tab: Sessions -->
       <div class="tab-panel active" id="histtab-sessions">
+        <div class="sort-bar">
+          <span class="sort-lbl">เรียง</span>
+          <button id="sb-sessions-newest" class="sort-btn active" onclick="setSort('sessions','newest')">ล่าสุดก่อน</button>
+          <button id="sb-sessions-oldest" class="sort-btn" onclick="setSort('sessions','oldest')">เก่าสุดก่อน</button>
+          <button id="sb-sessions-knownhigh" class="sort-btn" onclick="setSort('sessions','knownhigh')">รู้มาก ↓</button>
+          <button id="sb-sessions-notknownhigh" class="sort-btn" onclick="setSort('sessions','notknownhigh')">ไม่รู้มาก ↓</button>
+        </div>
         <div class="empty-state" id="hist2-empty">ยังไม่มีประวัติการทำแบบทดสอบ</div>
         <div id="hist2-list" style="display:flex;flex-direction:column;gap:10px"></div>
         <button class="action-btn danger hidden" id="hist2-clear-btn" onclick="clearHistory2()"><i class="ti ti-trash"></i> ลบประวัติทั้งหมด</button>
@@ -463,12 +478,23 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
 
       <!-- Sub-tab: Per Word -->
       <div class="tab-panel" id="histtab-perword">
+        <div class="sort-bar">
+          <span class="sort-lbl">เรียง</span>
+          <button id="sb-perword-notknownhigh" class="sort-btn active" onclick="setSort('perword','notknownhigh')">ไม่รู้มาก ↓</button>
+          <button id="sb-perword-knownhigh" class="sort-btn" onclick="setSort('perword','knownhigh')">รู้มาก ↓</button>
+          <button id="sb-perword-alpha" class="sort-btn" onclick="setSort('perword','alpha')">ก-ฮ</button>
+        </div>
         <div class="empty-state" id="perword-empty">ยังไม่มีข้อมูล</div>
         <div id="perword-list" style="display:flex;flex-direction:column;gap:8px"></div>
       </div>
 
       <!-- Sub-tab: By Category -->
       <div class="tab-panel" id="histtab-bycat">
+        <div class="sort-bar">
+          <span class="sort-lbl">เรียง</span>
+          <button id="sb-bycat-notknownhigh" class="sort-btn active" onclick="setSort('bycat','notknownhigh')">ต้องฝึก ↓</button>
+          <button id="sb-bycat-knownhigh" class="sort-btn" onclick="setSort('bycat','knownhigh')">รู้แล้ว ↓</button>
+        </div>
         <div class="empty-state" id="bycat-empty">ยังไม่มีข้อมูล</div>
         <div id="bycat-list" style="display:flex;flex-direction:column;gap:10px"></div>
       </div>
@@ -568,19 +594,8 @@ const ALL = [
   {en:"drive / drove / driven",ph:"",th:"ขับ (รถ)",ex:"He has driven to Chiang Mai twice.",exth:"เขาขับรถไปเชียงใหม่มาแล้วสองครั้ง",lv:"ม.3",cat:"Verb Forms"},
 ];
 
-// ── Firebase config ──
-// 1. ไปที่ https://console.firebase.google.com → สร้างโปรเจกต์ใหม่
-// 2. Build → Realtime Database → Create database (test mode)
-// 3. Project settings → Your apps → Web → copy config มาใส่ด้านล่าง
-const FIREBASE_CFG = {
-  apiKey:            "",   // ← ใส่ค่าจาก Firebase console
-  authDomain:        "",
-  databaseURL:       "",   // ← https://your-project-default-rtdb.REGION.firebasedatabase.app
-  projectId:         "",
-  storageBucket:     "",
-  messagingSenderId: "",
-  appId:             ""
-};
+// ── Firebase config (โหลดจาก firebase-config.js ที่ gitignore อยู่) ──
+const FIREBASE_CFG = (typeof window !== 'undefined' && window.FIREBASE_CFG) ? window.FIREBASE_CFG : {};
 
 // ── state ──
 const BASE_CATS = ["ทั้งหมด","คำศัพท์ทั่วไป","Phrasal Verbs","Idioms","Verb Forms"];
@@ -869,6 +884,19 @@ function navToHistTab(tab, opts) {
   switchHistTab(tab);
 }
 
+// Sort state per view
+const histSort = { sessions: 'newest', perword: 'notknownhigh', bycat: 'notknownhigh' };
+
+function setSort(view, key) {
+  histSort[view] = key;
+  document.querySelectorAll(`[id^="sb-${view}-"]`).forEach(b => {
+    b.classList.toggle('active', b.id === `sb-${view}-${key}`);
+  });
+  if (view === 'sessions') refreshSessions();
+  if (view === 'perword')  refreshPerWord();
+  if (view === 'bycat')    refreshByCategory();
+}
+
 const HIST_TAB_IDS = ['sessions','perword','bycat','trend'];
 function switchHistTab(name) {
   document.querySelectorAll('#histModalBackdrop .tab-panel').forEach(p => p.classList.remove('active'));
@@ -1072,14 +1100,23 @@ function toggleSession(headerEl) {
 }
 function refreshSessions() {
   const sessions = loadHistory();
+  // Assign round numbers from stored order (newest = highest)
+  sessions.forEach((s, i) => { s._rn = s.round || (sessions.length - i); });
   const list = document.getElementById('hist2-list');
   const empty = document.getElementById('hist2-empty');
   const btn = document.getElementById('hist2-clear-btn');
   empty.style.display = sessions.length ? 'none' : 'block';
   btn.classList.toggle('hidden', !sessions.length);
   list.innerHTML = '';
-  sessions.forEach((s, i) => {
-    const roundNum = s.round || (sessions.length - i);
+  // Apply sort
+  const sorted = [...sessions];
+  const sk = histSort.sessions;
+  if (sk === 'oldest') sorted.reverse();
+  else if (sk === 'knownhigh') sorted.sort((a,b) => (b.known.length/b.total||0) - (a.known.length/a.total||0));
+  else if (sk === 'notknownhigh') sorted.sort((a,b) => (b.notKnown.length/b.total||0) - (a.notKnown.length/a.total||0));
+  const newestDate = sessions[0]?.date;
+  sorted.forEach(s => {
+    const roundNum = s._rn;
     const k = s.known.length;
     const nk = s.notKnown.length;
     const pct = s.total > 0 ? Math.round(k / s.total * 100) : 0;
@@ -1089,8 +1126,8 @@ function refreshSessions() {
     ];
     const rows = allWords.map(w => {
       const catWord = getAllWords().find(v => v.en.toLowerCase() === w.en.toLowerCase());
-      const catStr = catWord ? `<span style="font-size:10px;color:var(--tx3);margin-left:4px">${esc(catWord.cat)}</span>` : '';
-      return `<tr><td>${esc(w.en)}${catStr}</td><td>${esc(w.th)}</td><td class="td-status-${w.status}">${w.status === 'known' ? '✓ รู้' : '✗ ไม่รู้'}</td></tr>`;
+      const catCell = catWord ? esc(catWord.cat) : '—';
+      return `<tr><td>${esc(w.en)}</td><td style="color:var(--tx-info);font-size:11px">${catCell}</td><td>${esc(w.th)}</td><td class="td-status-${w.status}">${w.status === 'known' ? '✓ รู้' : '✗ ไม่รู้'}</td></tr>`;
     }).join('');
     const d = document.createElement('div');
     d.className = 'hist-session';
@@ -1101,7 +1138,7 @@ function refreshSessions() {
           <div class="hist-meta">
             <span style="font-size:14px;font-weight:700;color:var(--tx)">ครั้งที่ ${roundNum}</span>
             <span class="hist-badge">${esc(s.cat)}</span>
-            ${i === 0 ? '<span style="font-size:10px;padding:2px 6px;border-radius:99px;background:var(--bg-ok);color:var(--tx-ok);border:.5px solid var(--bd-ok)">ล่าสุด</span>' : ''}
+            ${s.date === newestDate ? '<span style="font-size:10px;padding:2px 6px;border-radius:99px;background:var(--bg-ok);color:var(--tx-ok);border:.5px solid var(--bd-ok)">ล่าสุด</span>' : ''}
           </div>
           <div class="hist-date" style="margin-top:2px">${formatDate(s.date)}</div>
           <div class="hist-score" style="margin-top:3px">รู้ <b style="color:var(--tx-ok)">${k}</b> · ไม่รู้ <b style="color:var(--tx-err)">${nk}</b> · ${pct}% <span style="color:var(--tx3)">/ ${s.total} คำ</span></div>
@@ -1109,7 +1146,7 @@ function refreshSessions() {
       </div>
       <div class="hist-table-wrap">
         <table class="hist-table">
-          <thead><tr><th>คำ</th><th>ความหมาย</th><th>สถานะ</th></tr></thead>
+          <thead><tr><th>คำ</th><th>หมวด</th><th>ความหมาย</th><th>สถานะ</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>`;
@@ -1136,10 +1173,14 @@ function refreshPerWord() {
     s.known.forEach(w => addWord(w, 'known'));
     s.notKnown.forEach(w => addWord(w, 'notKnown'));
   });
-  const words = [...map.values()].sort((a, b) => {
-    const ra = a.notKnown / (a.known + a.notKnown);
-    const rb = b.notKnown / (b.known + b.notKnown);
-    return rb - ra || (b.notKnown + b.known) - (a.notKnown + a.known);
+  const base = [...map.values()];
+  const sk = histSort.perword;
+  const words = base.sort((a, b) => {
+    if (sk === 'knownhigh') return (b.known/(b.known+b.notKnown)||0) - (a.known/(a.known+a.notKnown)||0);
+    if (sk === 'alpha') return a.en.localeCompare(b.en, 'th');
+    // default notknownhigh
+    const ra = a.notKnown/(a.known+a.notKnown), rb = b.notKnown/(b.known+b.notKnown);
+    return rb - ra || (b.notKnown+b.known) - (a.notKnown+a.known);
   });
   words.forEach(w => {
     const total = w.known + w.notKnown;
@@ -1211,10 +1252,11 @@ function refreshByCategory() {
     entry.known += w.known;
     entry.notKnown += w.notKnown;
   });
+  const sk2 = histSort.bycat;
   const cats = [...catMap.values()].sort((a, b) => {
-    const ra = a.notKnown / (a.known + a.notKnown);
-    const rb = b.notKnown / (b.known + b.notKnown);
-    return rb - ra;
+    if (sk2 === 'knownhigh') return (b.known/(b.known+b.notKnown)||0) - (a.known/(a.known+a.notKnown)||0);
+    // default notknownhigh
+    return (b.notKnown/(b.known+b.notKnown)||0) - (a.notKnown/(a.known+a.notKnown)||0);
   });
   const focusCat = histFocusCat;
   histFocusCat = null;
@@ -1288,20 +1330,26 @@ function refreshTrend() {
   chart.innerHTML = '';
   if (sessions.length < 2) { empty.style.display = 'block'; return; }
   empty.style.display = 'none';
+  // Assign round numbers (newest = highest), then reverse to oldest-first for trend
+  sessions.forEach((s, i) => { s._rn = s.round || (sessions.length - i); });
   const ordered = [...sessions].reverse();
   ordered.forEach(s => {
     const pct = s.total > 0 ? Math.round(s.known.length / s.total * 100) : 0;
     const d = document.createElement('div');
     d.className = 'trend-item';
+    d.style.alignItems = 'flex-start';
     d.innerHTML =
-      `<div class="trend-dot"></div>
-       <div class="trend-date">${formatDate(s.date).split(' · ')[0]}</div>
-       <div class="trend-bar-wrap">
+      `<div class="trend-dot" style="margin-top:4px"></div>
+       <div style="min-width:96px">
+         <div style="font-size:12px;font-weight:600;color:var(--tx)">ครั้งที่ ${s._rn}</div>
+         <div style="font-size:10px;color:var(--tx3);line-height:1.5">${formatDate(s.date)}</div>
+       </div>
+       <div class="trend-bar-wrap" style="margin-top:6px">
          <div class="trend-bar-fill" style="width:${pct}%">
            ${pct >= 15 ? `<span class="trend-bar-pct">${pct}%</span>` : ''}
          </div>
        </div>
-       ${pct < 15 ? `<span style="font-size:10px;color:var(--tx3);min-width:28px">${pct}%</span>` : ''}`;
+       ${pct < 15 ? `<span style="font-size:10px;color:var(--tx3);min-width:28px;margin-top:6px">${pct}%</span>` : ''}`;
     chart.appendChild(d);
   });
 }
