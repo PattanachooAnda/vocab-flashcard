@@ -148,6 +148,7 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
 
 /* mobile */
 @media(max-width:599px){
+
   .topbar{padding:10px 14px 8px}
   .card-area{padding:10px 12px;gap:8px}
   .card-face{padding:20px 16px}
@@ -284,6 +285,16 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
           </div>
         </div>
         <div class="form-group">
+          <label class="form-label">หมวดหมู่</label>
+          <select class="form-input" id="inp-cat">
+            <option value="คำของฉัน">คำของฉัน</option>
+            <option value="คำศัพท์ทั่วไป">คำศัพท์ทั่วไป</option>
+            <option value="Phrasal Verbs">Phrasal Verbs</option>
+            <option value="Idioms">Idioms</option>
+            <option value="Verb Forms">Verb Forms</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label class="form-label">ประโยคตัวอย่าง (English)</label>
           <input class="form-input" id="inp-ex" placeholder='I am grateful for your help.' autocomplete="off">
         </div>
@@ -305,6 +316,16 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
           คัดลอกจาก LINE, Notes, Google Keep แล้ววางได้เลย
         </div>
         <div class="form-group">
+          <label class="form-label">หมวดหมู่</label>
+          <select class="form-input" id="paste-cat">
+            <option value="คำของฉัน">คำของฉัน</option>
+            <option value="คำศัพท์ทั่วไป">คำศัพท์ทั่วไป</option>
+            <option value="Phrasal Verbs">Phrasal Verbs</option>
+            <option value="Idioms">Idioms</option>
+            <option value="Verb Forms">Verb Forms</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label class="form-label">วางข้อความที่นี่</label>
           <textarea class="form-input" id="inp-paste" placeholder="Absent - ขาด / ไม่อยู่&#10;Polite - สุภาพ&#10;Curious, อยากรู้อยากเห็น"></textarea>
         </div>
@@ -319,6 +340,16 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
           ดาวน์โหลดจาก Google Drive · LINE · อีเมล · Files ในมือถือ<br><br>
           <b>TXT:</b> อังกฤษ - ไทย (1 บรรทัดต่อ 1 คำ)<br>
           <b>CSV:</b> คอลัมน์ 1=อังกฤษ, 2=ไทย, 3=การออกเสียง (ไม่บังคับ), 4=ประโยค (ไม่บังคับ)
+        </div>
+        <div class="form-group">
+          <label class="form-label">หมวดหมู่</label>
+          <select class="form-input" id="file-cat">
+            <option value="คำของฉัน">คำของฉัน</option>
+            <option value="คำศัพท์ทั่วไป">คำศัพท์ทั่วไป</option>
+            <option value="Phrasal Verbs">Phrasal Verbs</option>
+            <option value="Idioms">Idioms</option>
+            <option value="Verb Forms">Verb Forms</option>
+          </select>
         </div>
         <div class="file-zone" onclick="document.getElementById('fileInput').click()">
           <i class="ti ti-file-upload" style="font-size:36px;color:var(--tx3)"></i>
@@ -443,7 +474,8 @@ function filtered() {
 }
 function getCats() {
   const cats = [...BASE_CATS];
-  if (loadCustom().length > 0) cats.push('คำของฉัน');
+  const customCats = [...new Set(loadCustom().map(w => w.cat))];
+  customCats.forEach(c => { if (!cats.includes(c)) cats.push(c); });
   return cats;
 }
 
@@ -640,7 +672,7 @@ function addManual() {
     ex: document.getElementById('inp-ex').value.trim(),
     exth: document.getElementById('inp-exth').value.trim(),
     lv: document.getElementById('inp-lv').value,
-    cat: 'คำของฉัน'
+    cat: document.getElementById('inp-cat').value
   };
   const arr = loadCustom(); arr.push(w); saveCustom(arr);
   ['inp-en','inp-th','inp-ph','inp-ex','inp-exth'].forEach(id => document.getElementById(id).value = '');
@@ -649,14 +681,14 @@ function addManual() {
 }
 
 // parse text
-function parseText(text) {
+function parseText(text, cat = 'คำของฉัน') {
   return text.split('\n').map(l => l.trim()).filter(Boolean).reduce((acc, line) => {
-    let en, th;
+    let en, th, rest;
     if (line.includes('\t'))          { [en, ...rest] = line.split('\t'); th = rest.join('\t'); }
     else if (/\s+-\s+/.test(line))   { [en, th] = line.split(/\s+-\s+/); }
     else if (line.includes(','))      { [en, ...rest] = line.split(','); th = rest.join(','); }
     en = en?.trim(); th = th?.trim();
-    if (en && th) acc.push({ en, th, ph:'', ex:'', exth:'', lv:'ม.1', cat:'คำของฉัน' });
+    if (en && th) acc.push({ en, th, ph:'', ex:'', exth:'', lv:'ม.1', cat });
     return acc;
   }, []);
 }
@@ -670,7 +702,8 @@ document.getElementById('inp-paste').addEventListener('input', function() {
 });
 
 function importPaste() {
-  const words = parseText(document.getElementById('inp-paste').value);
+  const cat = document.getElementById('paste-cat').value;
+  const words = parseText(document.getElementById('inp-paste').value, cat);
   if (!words.length) { showMsg('paste-msg','ไม่พบคำศัพท์ในรูปแบบที่รองรับ', false); return; }
   const arr = loadCustom(); arr.push(...words); saveCustom(arr);
   document.getElementById('inp-paste').value = '';
@@ -680,20 +713,21 @@ function importPaste() {
 }
 
 // file tab
-function parseCSV(text) {
+function parseCSV(text, cat = 'คำของฉัน') {
   return text.split('\n').map(l => l.trim()).filter(Boolean).reduce((acc, line) => {
     const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g,''));
     if (cols.length >= 2 && cols[0] && cols[1])
-      acc.push({ en:cols[0], th:cols[1], ph:cols[2]||'', ex:cols[3]||'', exth:cols[4]||'', lv:cols[5]||'ม.1', cat:'คำของฉัน' });
+      acc.push({ en:cols[0], th:cols[1], ph:cols[2]||'', ex:cols[3]||'', exth:cols[4]||'', lv:cols[5]||'ม.1', cat });
     return acc;
   }, []);
 }
 
 function handleFileUpload(e) {
   const file = e.target.files[0]; if (!file) return;
+  const cat = document.getElementById('file-cat').value;
   const reader = new FileReader();
   reader.onload = ev => {
-    const words = file.name.endsWith('.csv') ? parseCSV(ev.target.result) : parseText(ev.target.result);
+    const words = file.name.endsWith('.csv') ? parseCSV(ev.target.result, cat) : parseText(ev.target.result, cat);
     pendingFile = words;
     const ok = words.length > 0;
     showMsg('file-msg', ok ? 'พบ ' + words.length + ' คำ พร้อมนำเข้า' : 'ไม่พบคำศัพท์ กรุณาตรวจสอบรูปแบบ', ok);
