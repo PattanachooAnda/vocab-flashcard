@@ -1,9 +1,37 @@
 {
   "permissions": {
     "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(ls -la d:/.claude/skills/ 2>/dev/null || echo \"No skills directory found\")",
+      "Read(//d/.claude/**)",
+      "Bash(pip install *)",
+      "Bash(npx --yes playwright install chromium --with-deps)",
+      "Bash(python3)",
+      "Bash(node -c index.html)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)"
+    ],
+    "deny": []
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; cd \"$(git rev-parse --show-toplevel 2>/dev/null || echo .)\" && git add \"$f\" && git commit -m \"$(cat <<'COMMIT'\n$(basename \"$f\") — auto-commit\n\nCo-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>\nCOMMIT\n)\" 2>/dev/null && git push origin main 2>/dev/null || true; }",
+            "statusMessage": "Auto-committing and pushing changes"
+          }
+        ]
+      }
     ]
   }
 }

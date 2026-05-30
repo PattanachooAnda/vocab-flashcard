@@ -182,6 +182,31 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
 .ci-del{width:30px;height:30px;border-radius:50%;border:none;background:var(--bg-err);color:var(--tx-err);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .empty-state{font-size:14px;color:var(--tx3);text-align:center;padding:20px 0}
 
+/* Vocabulary browser */
+.vocab-browser { display:flex; flex-direction:column; gap:10px; }
+.vocab-section { display:flex; flex-direction:column; gap:6px; }
+.vocab-section-header { cursor:pointer; display:flex; align-items:center; gap:6px; user-select:none; font-weight:500; color:var(--tx); padding:8px 0; }
+.vocab-expand-icon { font-size:12px; color:var(--tx3); transition:transform .2s; }
+.vocab-section.expanded .vocab-expand-icon { transform:rotate(90deg); }
+.vocab-words { display:flex; flex-direction:column; gap:6px; margin-left:8px; }
+.word-item { padding:10px 12px; background:var(--bg2); border-radius:var(--r); border:.5px solid var(--bd2); display:flex; flex-direction:column; gap:2px; cursor:pointer; transition:all .15s; }
+.word-item:active { transform:scale(.98); }
+.word-item.selected { background:var(--bg-info); border-color:var(--bd-info); }
+.word-en { font-weight:500; color:var(--tx); font-size:14px; }
+.word-th { font-size:12px; color:var(--tx2); }
+.word-level { font-size:11px; color:var(--tx3); }
+
+/* Category stats dashboard */
+.cat-stats-list { display:flex; flex-direction:column; gap:10px; }
+.cat-stat-card { background:var(--bg2); border-radius:var(--r); padding:12px; border:.5px solid var(--bd2); cursor:pointer; transition:all .15s; }
+.cat-stat-card:active { transform:scale(.98); }
+.cat-stat-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.cat-stat-name { font-weight:500; color:var(--tx); }
+.cat-stat-count { font-size:12px; color:var(--tx2); }
+.cat-stat-bar { width:100%; height:6px; background:var(--bd2); border-radius:99px; overflow:hidden; }
+.cat-stat-fill { height:100%; background:var(--tx-info); transition:width .4s ease; }
+.cat-stat-pct { font-size:11px; color:var(--tx3); margin-top:4px; }
+
 /* utils */
 .hidden{display:none!important}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
@@ -217,6 +242,9 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
       <div style="display:flex;gap:6px;align-items:center">
         <button class="import-btn" onclick="openHistoryModal()">
           <i class="ti ti-chart-bar"></i> ประวัติ
+        </button>
+        <button class="import-btn" onclick="openVocabModal()">
+          <i class="ti ti-book"></i> คลังคำ
         </button>
         <button class="import-btn" onclick="openImport()">
           <i class="ti ti-plus"></i> เพิ่มคำศัพท์
@@ -459,6 +487,31 @@ textarea.form-input{min-height:120px;resize:vertical;line-height:1.6}
   </div>
 </div>
 
+<!-- Vocabulary Modal -->
+<div class="modal-backdrop" id="vocabModalBackdrop" onclick="handleVocabBackdropClick(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">คลังคำศัพท์</div>
+      <button class="modal-close" onclick="closeVocabModal()"><i class="ti ti-x" style="font-size:14px"></i></button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchVocabTab('browser')">ค้นหา</button>
+      <button class="modal-tab" onclick="switchVocabTab('stats')">สถิติหมวด</button>
+    </div>
+    <div class="modal-body">
+      <div class="tab-panel active" id="vocabtab-browser">
+        <div class="form-group" style="margin-bottom:10px">
+          <input type="text" class="form-input" id="vocab-search" placeholder="ค้นหาคำศัพท์...">
+        </div>
+        <div class="vocab-browser" id="vocabBrowser"></div>
+      </div>
+      <div class="tab-panel" id="vocabtab-stats">
+        <div class="cat-stats-list" id="catStatsList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 const ALL = [
   // ── คำศัพท์ทั่วไป ──
@@ -549,11 +602,20 @@ const BASE_CATS = ["ทั้งหมด","คำศัพท์ทั่วไ
 let activeCat = "ทั้งหมด";
 let deck = [], idx = 0, flipped = false, done = false;
 let cardStatus = []; // null | 'known' | 'notKnown'
+let selectedWord = null; // { en, th } or null
 
 function countKnown() { return cardStatus.filter(s => s === 'known').length; }
 function countNotKnown() { return cardStatus.filter(s => s === 'notKnown').length; }
 function countAnswered() { return cardStatus.filter(s => s !== null).length; }
 function isAllAnswered() { return deck.length > 0 && cardStatus.every(s => s !== null); }
+
+function selectWord(word) {
+  selectedWord = word;
+  const browserTab = document.getElementById('vocabtab-browser');
+  const statsTab = document.getElementById('vocabtab-stats');
+  if (browserTab && browserTab.classList.contains('active')) refreshVocabBrowser();
+  if (statsTab && statsTab.classList.contains('active')) refreshCatStats();
+}
 
 // ── custom vocab (localStorage) ──
 function loadCustom() {
@@ -1079,6 +1141,154 @@ function refreshTrend() {
     chart.appendChild(d);
   });
 }
+
+// ── vocabulary modal ──
+function openVocabModal() {
+  selectedWord = null;
+  document.getElementById('vocabModalBackdrop').classList.add('open');
+  document.getElementById('vocab-search').value = '';
+  refreshVocabBrowser();
+}
+
+function closeVocabModal() {
+  document.getElementById('vocabModalBackdrop').classList.remove('open');
+  selectedWord = null;
+}
+
+function handleVocabBackdropClick(e) {
+  if (e.target === e.currentTarget) closeVocabModal();
+}
+
+function switchVocabTab(name) {
+  document.querySelectorAll('#vocabModalBackdrop .modal-tab').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('#vocabModalBackdrop .tab-panel').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('vocabtab-' + name).classList.add('active');
+  if (name === 'browser') refreshVocabBrowser();
+  else if (name === 'stats') refreshCatStats();
+}
+
+function filterVocabWords(query) {
+  const all = getAllWords();
+  const words = activeCat === 'ทั้งหมด' ? all : all.filter(w => w.cat === activeCat);
+  if (!query) return words;
+  const q = query.toLowerCase();
+  return words.filter(w => w.en.toLowerCase().includes(q) || w.th.includes(q));
+}
+
+function toggleVocabSection(el) {
+  el.parentElement.classList.toggle('expanded');
+}
+
+function refreshVocabBrowser() {
+  const container = document.getElementById('vocabBrowser');
+  const query = document.getElementById('vocab-search').value;
+  const words = filterVocabWords(query);
+
+  if (query) {
+    container.innerHTML = '';
+    if (words.length === 0) {
+      container.innerHTML = '<div class="empty-state">ไม่พบคำศัพท์ที่ค้นหา</div>';
+      return;
+    }
+    words.forEach(w => {
+      const div = document.createElement('div');
+      div.className = 'word-item' + (selectedWord && selectedWord.en === w.en && selectedWord.th === w.th ? ' selected' : '');
+      div.innerHTML = `<div class="word-en">${esc(w.en)}</div><div class="word-th">${esc(w.th)}</div><div class="word-level">${w.lv || ''}</div>`;
+      div.onclick = () => selectWord({en: w.en, th: w.th});
+      container.appendChild(div);
+    });
+  } else {
+    const cats = getCats().filter(c => activeCat === 'ทั้งหมด' ? true : c === activeCat);
+    container.innerHTML = '';
+    cats.forEach(cat => {
+      const catWords = words.filter(w => w.cat === cat);
+      if (catWords.length === 0) return;
+
+      const section = document.createElement('div');
+      section.className = 'vocab-section expanded';
+
+      const header = document.createElement('div');
+      header.className = 'vocab-section-header';
+      header.innerHTML = `<i class="vocab-expand-icon ti ti-chevron-right"></i> <span>${esc(cat)}</span>`;
+      header.onclick = () => toggleVocabSection(header);
+
+      const wordsDiv = document.createElement('div');
+      wordsDiv.className = 'vocab-words';
+      catWords.forEach(w => {
+        const div = document.createElement('div');
+        div.className = 'word-item' + (selectedWord && selectedWord.en === w.en && selectedWord.th === w.th ? ' selected' : '');
+        div.innerHTML = `<div class="word-en">${esc(w.en)}</div><div class="word-th">${esc(w.th)}</div><div class="word-level">${w.lv || ''}</div>`;
+        div.onclick = () => selectWord({en: w.en, th: w.th});
+        wordsDiv.appendChild(div);
+      });
+
+      section.appendChild(header);
+      section.appendChild(wordsDiv);
+      container.appendChild(section);
+    });
+  }
+}
+
+function getCatStats() {
+  const cats = getCats().filter(c => c !== 'ทั้งหมด');
+  const history = loadHistory();
+  const stats = [];
+
+  cats.forEach(cat => {
+    const catWords = getAllWords().filter(w => w.cat === cat);
+    const total = catWords.length;
+    let known = 0;
+
+    history.forEach(session => {
+      session.known.forEach(w => {
+        if (catWords.some(cw => cw.en === w.en)) known++;
+      });
+    });
+
+    const pct = total > 0 ? Math.round(known / total * 100) : 0;
+    stats.push({ cat, total, known, pct });
+  });
+
+  return stats;
+}
+
+function refreshCatStats() {
+  const container = document.getElementById('catStatsList');
+  const stats = getCatStats();
+
+  if (stats.length === 0) {
+    container.innerHTML = '<div class="empty-state">ไม่มีข้อมูล</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  stats.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'cat-stat-card';
+    card.innerHTML = `
+      <div class="cat-stat-header">
+        <div class="cat-stat-name">${esc(s.cat)}</div>
+        <div class="cat-stat-count">${s.total} คำ</div>
+      </div>
+      <div class="cat-stat-bar">
+        <div class="cat-stat-fill" style="width:${s.pct}%"></div>
+      </div>
+      <div class="cat-stat-pct">รู้แล้ว ${s.known} / ${s.total} (${s.pct}%)</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const searchInput = document.getElementById('vocab-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      selectedWord = null;
+      refreshVocabBrowser();
+    });
+  }
+});
 
 // ── init ──
 buildCats();
