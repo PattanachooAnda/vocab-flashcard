@@ -36,26 +36,37 @@ jobs:
           FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
           FIREBASE_APP_ID:              ${{ secrets.FIREBASE_APP_ID }}
         run: |
-          python3 << 'EOF'
-          import os
+          cat > /tmp/inject_firebase.py << 'PYEOF'
+          import os, sys
+          keys = ['FIREBASE_API_KEY','FIREBASE_AUTH_DOMAIN','FIREBASE_DATABASE_URL',
+                  'FIREBASE_PROJECT_ID','FIREBASE_STORAGE_BUCKET','FIREBASE_MESSAGING_SENDER_ID','FIREBASE_APP_ID']
+          missing = [k for k in keys if not os.environ.get(k)]
+          if missing:
+              print(f"ERROR: Missing GitHub secrets: {missing}", file=sys.stderr)
+              sys.exit(1)
+          e = {k: os.environ[k] for k in keys}
           cfg = (
-            "<script>window.FIREBASE_CFG={"
-            f"apiKey:\"{os.environ['FIREBASE_API_KEY']}\","
-            f"authDomain:\"{os.environ['FIREBASE_AUTH_DOMAIN']}\","
-            f"databaseURL:\"{os.environ['FIREBASE_DATABASE_URL']}\","
-            f"projectId:\"{os.environ['FIREBASE_PROJECT_ID']}\","
-            f"storageBucket:\"{os.environ['FIREBASE_STORAGE_BUCKET']}\","
-            f"messagingSenderId:\"{os.environ['FIREBASE_MESSAGING_SENDER_ID']}\","
-            f"appId:\"{os.environ['FIREBASE_APP_ID']}\""
-            "};</script>"
+              '<script>window.FIREBASE_CFG={'
+              f'apiKey:"{e["FIREBASE_API_KEY"]}",'
+              f'authDomain:"{e["FIREBASE_AUTH_DOMAIN"]}",'
+              f'databaseURL:"{e["FIREBASE_DATABASE_URL"]}",'
+              f'projectId:"{e["FIREBASE_PROJECT_ID"]}",'
+              f'storageBucket:"{e["FIREBASE_STORAGE_BUCKET"]}",'
+              f'messagingSenderId:"{e["FIREBASE_MESSAGING_SENDER_ID"]}",'
+              f'appId:"{e["FIREBASE_APP_ID"]}"'
+              '};</script>'
           )
           with open('index.html', 'r', encoding='utf-8') as f:
               content = f.read()
+          if '<!-- __FIREBASE_CONFIG__ -->' not in content:
+              print("ERROR: placeholder not found in index.html", file=sys.stderr)
+              sys.exit(1)
           content = content.replace('<!-- __FIREBASE_CONFIG__ -->', cfg)
           with open('index.html', 'w', encoding='utf-8') as f:
               f.write(content)
-          print("Firebase config injected into index.html")
-          EOF
+          print("Firebase config injected successfully")
+          PYEOF
+          python3 /tmp/inject_firebase.py
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
