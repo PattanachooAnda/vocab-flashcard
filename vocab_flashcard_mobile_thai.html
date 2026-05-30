@@ -1,0 +1,234 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap');
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+.app{font-family:'Sarabun',sans-serif;background:var(--color-background-tertiary);min-height:100vh;padding:0;display:flex;flex-direction:column;align-items:center}
+.topbar{width:100%;background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:14px 16px 10px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.appname{font-size:17px;font-weight:500;color:var(--color-text-primary);letter-spacing:0.2px}
+.appname span{color:var(--color-text-info)}
+.cats{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.cat-btn{font-family:'Sarabun',sans-serif;font-size:12px;padding:5px 12px;border-radius:99px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-secondary);cursor:pointer;transition:all .15s;font-weight:400}
+.cat-btn.active{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info);font-weight:500}
+.prog-wrap{width:100%;padding:10px 16px 0;display:flex;flex-direction:column;gap:4px}
+.prog-row{display:flex;justify-content:space-between;align-items:center}
+.prog-label{font-size:12px;color:var(--color-text-secondary)}
+.prog-bar{width:100%;height:4px;background:var(--color-border-tertiary);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;background:var(--color-text-info);border-radius:99px;transition:width .35s ease}
+.card-area{width:100%;max-width:420px;padding:16px;flex:1;display:flex;flex-direction:column;gap:12px}
+.card-wrap{width:100%;perspective:900px}
+.card-inner{width:100%;position:relative;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1);cursor:pointer}
+.card-face{position:absolute;width:100%;backface-visibility:hidden;border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px}
+.card-back{transform:rotateY(180deg);background:var(--color-background-secondary)}
+.card-inner.flipped{transform:rotateY(180deg)}
+.card-tag{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--color-text-tertiary);margin-bottom:12px;font-weight:400}
+.card-en{font-size:2.2rem;font-weight:700;color:var(--color-text-primary);text-align:center;line-height:1.1;margin:0 0 6px}
+.card-ph{font-size:13px;color:var(--color-text-tertiary);margin:0 0 14px;font-weight:300}
+.card-level{font-size:11px;padding:3px 10px;border-radius:99px;border:0.5px solid var(--color-border-secondary);color:var(--color-text-secondary);background:var(--color-background-secondary)}
+.card-hint{font-size:12px;color:var(--color-text-tertiary);margin-top:16px;display:flex;align-items:center;gap:4px}
+.card-th{font-size:1.7rem;font-weight:700;color:var(--color-text-info);text-align:center;line-height:1.2;margin:0 0 8px}
+.card-ex{font-size:13px;color:var(--color-text-secondary);text-align:center;line-height:1.6;font-style:italic;font-weight:300;max-width:280px}
+.card-ex-th{font-size:13px;color:var(--color-text-tertiary);text-align:center;line-height:1.5;margin-top:6px;font-weight:300}
+.reveal-btn{width:100%;padding:14px;border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-info);background:var(--color-background-info);color:var(--color-text-info);font-family:'Sarabun',sans-serif;font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s}
+.reveal-btn:active{transform:scale(0.98)}
+.result-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.res-btn{padding:13px;border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);font-family:'Sarabun',sans-serif;font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
+.res-btn:active{transform:scale(0.97)}
+.btn-know{background:var(--color-background-success);color:var(--color-text-success);border-color:var(--color-border-success)}
+.btn-dontknow{background:var(--color-background-danger);color:var(--color-text-danger);border-color:var(--color-border-danger)}
+.nav-row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
+.nav-btn{padding:11px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-secondary);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .15s}
+.nav-btn:active{transform:scale(0.97)}
+.shuffle-btn{padding:11px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-tertiary);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.shuffle-btn:active{transform:scale(0.97)}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat-box{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 8px;text-align:center}
+.stat-num{font-size:20px;font-weight:500;display:block;color:var(--color-text-primary)}
+.stat-num.s{color:var(--color-text-success)}
+.stat-num.d{color:var(--color-text-danger)}
+.stat-lbl{font-size:11px;color:var(--color-text-tertiary)}
+.done-box{width:100%;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:28px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
+.done-title{font-size:22px;font-weight:700;color:var(--color-text-primary)}
+.done-sub{font-size:14px;color:var(--color-text-secondary);line-height:1.6}
+.done-restart{padding:13px 24px;border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-info);background:var(--color-background-info);color:var(--color-text-info);font-family:'Sarabun',sans-serif;font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s}
+.done-restart:active{transform:scale(0.97)}
+.hidden{display:none!important}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+</style>
+
+<h2 class="sr-only">คลังคำศัพท์ภาษาอังกฤษระดับ ม.1–ม.6 แบบ flashcard พร้อมคำแปลภาษาไทย</h2>
+
+<div class="app">
+  <div class="topbar">
+    <div class="appname">Vocab<span>Cards</span> ม.ต้น–ม.ปลาย</div>
+    <div class="cats" id="cats"></div>
+  </div>
+
+  <div class="prog-wrap">
+    <div class="prog-row">
+      <span class="prog-label" id="progLabel">1 / 30</span>
+      <span class="prog-label" id="progPct">0%</span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+  </div>
+
+  <div class="card-area">
+    <div class="card-wrap" id="cardWrap" style="height:220px">
+      <div class="card-inner" id="cardInner" onclick="flip()">
+        <div class="card-face" style="height:220px">
+          <div class="card-tag">คำศัพท์ภาษาอังกฤษ</div>
+          <div class="card-en" id="cEn">—</div>
+          <div class="card-ph" id="cPh"></div>
+          <div class="card-level" id="cLv"></div>
+          <div class="card-hint"><i class="ti ti-hand-click" aria-hidden="true" style="font-size:14px"></i> แตะการ์ดเพื่อดูความหมาย</div>
+        </div>
+        <div class="card-face card-back" style="height:220px">
+          <div class="card-tag">คำแปลภาษาไทย</div>
+          <div class="card-th" id="cTh">—</div>
+          <div class="card-ex" id="cEx"></div>
+          <div class="card-ex-th" id="cExTh"></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="reveal-btn" id="revealBtn" onclick="flip()">
+      <i class="ti ti-eye" aria-hidden="true" style="font-size:17px"></i> ดูความหมาย
+    </button>
+
+    <div class="result-row hidden" id="resultRow">
+      <button class="res-btn btn-dontknow" onclick="mark(false)"><i class="ti ti-x" aria-hidden="true"></i> ยังไม่รู้</button>
+      <button class="res-btn btn-know" onclick="mark(true)"><i class="ti ti-check" aria-hidden="true"></i> รู้แล้ว!</button>
+    </div>
+
+    <div class="nav-row">
+      <button class="nav-btn" onclick="go(-1)"><i class="ti ti-arrow-left" aria-hidden="true"></i> ก่อนหน้า</button>
+      <button class="shuffle-btn" onclick="shuffleAll()" title="สุ่มใหม่" aria-label="สุ่มใหม่"><i class="ti ti-arrows-shuffle" aria-hidden="true" style="font-size:18px"></i></button>
+      <button class="nav-btn" onclick="go(1)">ถัดไป <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box"><span class="stat-num s" id="stK">0</span><span class="stat-lbl">รู้แล้ว</span></div>
+      <div class="stat-box"><span class="stat-num d" id="stD">0</span><span class="stat-lbl">ยังไม่รู้</span></div>
+      <div class="stat-box"><span class="stat-num" id="stL">0</span><span class="stat-lbl">เหลือ</span></div>
+    </div>
+
+    <div class="done-box hidden" id="doneBox">
+      <div class="done-title">เสร็จแล้ว!</div>
+      <div class="done-sub" id="doneSub"></div>
+      <button class="done-restart" onclick="restart()"><i class="ti ti-refresh" aria-hidden="true"></i> เริ่มใหม่</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ALL = [
+  {en:"Absent",ph:"/ˈæb.sənt/",th:"ขาด / ไม่อยู่",ex:"He was absent from school today.",exth:"เขาขาดเรียนวันนี้",lv:"ม.1",cat:"ชีวิตประจำวัน"},
+  {en:"Polite",ph:"/pəˈlaɪt/",th:"สุภาพ / มีมารยาท",ex:"She is always polite to everyone.",exth:"เธอสุภาพกับทุกคนเสมอ",lv:"ม.1",cat:"ชีวิตประจำวัน"},
+  {en:"Curious",ph:"/ˈkjʊər.i.əs/",th:"อยากรู้อยากเห็น",ex:"Children are naturally curious.",exth:"เด็กๆ มักอยากรู้อยากเห็นตามธรรมชาติ",lv:"ม.1",cat:"ชีวิตประจำวัน"},
+  {en:"Schedule",ph:"/ˈʃed.juːl/",th:"ตารางเวลา / กำหนดการ",ex:"Check the schedule before you go.",exth:"ตรวจตารางเวลาก่อนไป",lv:"ม.2",cat:"ชีวิตประจำวัน"},
+  {en:"Responsible",ph:"/rɪˈspɒn.sɪ.bəl/",th:"มีความรับผิดชอบ",ex:"Be responsible for your own actions.",exth:"รับผิดชอบต่อการกระทำของตัวเอง",lv:"ม.2",cat:"ชีวิตประจำวัน"},
+  {en:"Anxious",ph:"/ˈæŋk.ʃəs/",th:"วิตกกังวล / กระวนกระวาย",ex:"She felt anxious before the exam.",exth:"เธอรู้สึกวิตกกังวลก่อนสอบ",lv:"ม.2",cat:"อารมณ์"},
+  {en:"Generous",ph:"/ˈdʒen.ər.əs/",th:"ใจกว้าง / เอื้อเฟื้อ",ex:"He is generous with his time and money.",exth:"เขาเอื้อเฟื้อทั้งเวลาและเงินทอง",lv:"ม.3",cat:"ชีวิตประจำวัน"},
+  {en:"Efficient",ph:"/ɪˈfɪʃ.ənt/",th:"มีประสิทธิภาพ",ex:"A good worker must be efficient.",exth:"พนักงานที่ดีต้องมีประสิทธิภาพ",lv:"ม.3",cat:"การทำงาน"},
+  {en:"Grateful",ph:"/ˈɡreɪt.fəl/",th:"รู้สึกขอบคุณ / กตัญญู",ex:"I am grateful for your help.",exth:"ฉันรู้สึกขอบคุณสำหรับความช่วยเหลือ",lv:"ม.3",cat:"อารมณ์"},
+  {en:"Negotiate",ph:"/nɪˈɡəʊ.ʃi.eɪt/",th:"เจรจา / ต่อรอง",ex:"They negotiated a new contract.",exth:"พวกเขาเจรจาสัญญาฉบับใหม่",lv:"ม.4",cat:"การทำงาน"},
+  {en:"Volunteer",ph:"/ˌvɒl.ənˈtɪər/",th:"อาสาสมัคร / จิตอาสา",ex:"She volunteers at the local hospital.",exth:"เธออาสาทำงานที่โรงพยาบาลท้องถิ่น",lv:"ม.4",cat:"สังคม"},
+  {en:"Environment",ph:"/ɪnˈvaɪ.rən.mənt/",th:"สิ่งแวดล้อม",ex:"We must protect the environment.",exth:"เราต้องปกป้องสิ่งแวดล้อม",lv:"ม.4",cat:"สังคม"},
+  {en:"Sustainable",ph:"/səˈsteɪ.nə.bəl/",th:"ยั่งยืน / คงทน",ex:"We need sustainable energy sources.",exth:"เราต้องการแหล่งพลังงานที่ยั่งยืน",lv:"ม.5",cat:"สังคม"},
+  {en:"Inspire",ph:"/ɪnˈspaɪər/",th:"สร้างแรงบันดาลใจ",ex:"Great leaders inspire others to act.",exth:"ผู้นำที่ดีสร้างแรงบันดาลใจให้ผู้อื่น",lv:"ม.5",cat:"การทำงาน"},
+  {en:"Consequence",ph:"/ˈkɒn.sɪ.kwəns/",th:"ผลที่ตามมา / ผลลัพธ์",ex:"Think about the consequences of your actions.",exth:"คิดถึงผลที่ตามมาจากการกระทำของคุณ",lv:"ม.5",cat:"ชีวิตประจำวัน"},
+  {en:"Accomplish",ph:"/əˈkʌm.plɪʃ/",th:"บรรลุ / ประสบความสำเร็จ",ex:"She accomplished all her goals.",exth:"เธอบรรลุเป้าหมายทั้งหมด",lv:"ม.5",cat:"การทำงาน"},
+  {en:"Competent",ph:"/ˈkɒm.pɪ.tənt/",th:"มีความสามารถ / เชี่ยวชาญ",ex:"A competent officer handles problems well.",exth:"เจ้าหน้าที่ที่มีความสามารถจัดการปัญหาได้ดี",lv:"ม.6",cat:"การทำงาน"},
+  {en:"Transparent",ph:"/trænsˈpær.ənt/",th:"โปร่งใส / ชัดเจน",ex:"The government should be transparent.",exth:"รัฐบาลควรมีความโปร่งใส",lv:"ม.6",cat:"สังคม"},
+  {en:"Integrity",ph:"/ɪnˈteɡ.rɪ.ti/",th:"ความซื่อสัตย์ / ความมีคุณธรรม",ex:"Public officers must have integrity.",exth:"ข้าราชการต้องมีความซื่อสัตย์",lv:"ม.6",cat:"ราชการ"},
+  {en:"Authority",ph:"/ɔːˈθɒr.ɪ.ti/",th:"อำนาจ / หน่วยงานที่มีอำนาจ",ex:"The authority approved the new law.",exth:"หน่วยงานอนุมัติกฎหมายใหม่",lv:"ม.6",cat:"ราชการ"},
+  {en:"Regulation",ph:"/ˌreɡ.jʊˈleɪ.ʃən/",th:"กฎระเบียบ / ข้อบังคับ",ex:"All staff must follow the regulations.",exth:"พนักงานทุกคนต้องปฏิบัติตามกฎระเบียบ",lv:"ม.6",cat:"ราชการ"},
+  {en:"Petition",ph:"/pəˈtɪʃ.ən/",th:"คำร้อง / ยื่นคำร้อง",ex:"Citizens signed a petition for change.",exth:"ประชาชนเซ็นคำร้องเรียกร้องการเปลี่ยนแปลง",lv:"ม.6",cat:"ราชการ"},
+  {en:"Emphasize",ph:"/ˈem.fə.saɪz/",th:"เน้น / ให้ความสำคัญ",ex:"The teacher emphasized the key points.",exth:"ครูเน้นย้ำประเด็นสำคัญ",lv:"ม.5",cat:"การทำงาน"},
+  {en:"Hesitate",ph:"/ˈhez.ɪ.teɪt/",th:"ลังเล / ชักช้า",ex:"Don't hesitate to ask for help.",exth:"อย่าลังเลที่จะขอความช่วยเหลือ",lv:"ม.4",cat:"อารมณ์"},
+  {en:"Acknowledge",ph:"/əkˈnɒl.ɪdʒ/",th:"ยอมรับ / รับทราบ",ex:"She acknowledged her mistake.",exth:"เธอยอมรับความผิดพลาดของตัวเอง",lv:"ม.5",cat:"ชีวิตประจำวัน"},
+  {en:"Discipline",ph:"/ˈdɪs.ɪ.plɪn/",th:"วินัย / ระเบียบวินัย",ex:"Discipline is key to success.",exth:"วินัยคือกุญแจสู่ความสำเร็จ",lv:"ม.3",cat:"ชีวิตประจำวัน"},
+  {en:"Prioritize",ph:"/praɪˈɒr.ɪ.taɪz/",th:"จัดลำดับความสำคัญ",ex:"Prioritize your most important tasks first.",exth:"จัดลำดับงานสำคัญที่สุดก่อน",lv:"ม.6",cat:"การทำงาน"},
+  {en:"Prejudice",ph:"/ˈpredʒ.ʊ.dɪs/",th:"อคติ / ความลำเอียง",ex:"We should act without prejudice.",exth:"เราควรปฏิบัติโดยปราศจากอคติ",lv:"ม.6",cat:"สังคม"},
+  {en:"Citizen",ph:"/ˈsɪt.ɪ.zən/",th:"พลเมือง / ประชาชน",ex:"Every citizen has rights and duties.",exth:"พลเมืองทุกคนมีสิทธิและหน้าที่",lv:"ม.4",cat:"ราชการ"},
+  {en:"Welfare",ph:"/ˈwel.feər/",th:"สวัสดิภาพ / ความเป็นอยู่ที่ดี",ex:"The government cares about public welfare.",exth:"รัฐบาลดูแลสวัสดิภาพของประชาชน",lv:"ม.5",cat:"ราชการ"},
+];
+
+const CATS = ["ทั้งหมด","ชีวิตประจำวัน","อารมณ์","การทำงาน","สังคม","ราชการ"];
+let activeCat = "ทั้งหมด";
+let deck = [], idx = 0, known = 0, notKnown = 0, flipped = false, done = false;
+
+function filtered(){ return activeCat === "ทั้งหมด" ? [...ALL] : ALL.filter(w=>w.cat===activeCat); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a; }
+
+function buildCats(){
+  const c = document.getElementById('cats');
+  CATS.forEach(name=>{
+    const b = document.createElement('button');
+    b.className = 'cat-btn' + (name===activeCat?' active':'');
+    b.textContent = name;
+    b.onclick = ()=>{ activeCat=name; document.querySelectorAll('.cat-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); restart(); };
+    c.appendChild(b);
+  });
+}
+
+function render(){
+  if(idx >= deck.length){ showDone(); return; }
+  const w = deck[idx];
+  document.getElementById('cEn').textContent = w.en;
+  document.getElementById('cPh').textContent = w.ph;
+  document.getElementById('cLv').textContent = w.lv + ' · ' + w.cat;
+  document.getElementById('cTh').textContent = w.th;
+  document.getElementById('cEx').textContent = '"' + w.ex + '"';
+  document.getElementById('cExTh').textContent = w.exth;
+  document.getElementById('cardInner').classList.remove('flipped');
+  document.getElementById('revealBtn').classList.remove('hidden');
+  document.getElementById('resultRow').classList.add('hidden');
+  flipped = false;
+  const pct = Math.round(idx / deck.length * 100);
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progLabel').textContent = (idx+1) + ' / ' + deck.length;
+  document.getElementById('progPct').textContent = pct + '%';
+  document.getElementById('stK').textContent = known;
+  document.getElementById('stD').textContent = notKnown;
+  document.getElementById('stL').textContent = deck.length - idx;
+  document.getElementById('doneBox').classList.add('hidden');
+  document.getElementById('cardWrap').classList.remove('hidden');
+}
+
+function flip(){
+  if(done) return;
+  if(!flipped){
+    flipped = true;
+    document.getElementById('cardInner').classList.add('flipped');
+    document.getElementById('revealBtn').classList.add('hidden');
+    document.getElementById('resultRow').classList.remove('hidden');
+  } else {
+    flipped = false;
+    document.getElementById('cardInner').classList.remove('flipped');
+    document.getElementById('revealBtn').classList.remove('hidden');
+    document.getElementById('resultRow').classList.add('hidden');
+  }
+}
+
+function mark(k){ if(k) known++; else notKnown++; idx++; render(); }
+function go(d){ idx = Math.max(0, Math.min(deck.length-1, idx+d)); render(); }
+function shuffleAll(){ deck = shuffle(filtered()); idx=0; known=0; notKnown=0; done=false; render(); }
+function showDone(){
+  done = true;
+  document.getElementById('cardWrap').classList.add('hidden');
+  document.getElementById('revealBtn').classList.add('hidden');
+  document.getElementById('resultRow').classList.add('hidden');
+  document.getElementById('progFill').style.width = '100%';
+  document.getElementById('progLabel').textContent = deck.length + ' / ' + deck.length;
+  document.getElementById('progPct').textContent = '100%';
+  document.getElementById('stK').textContent = known;
+  document.getElementById('stD').textContent = notKnown;
+  document.getElementById('stL').textContent = 0;
+  document.getElementById('doneSub').textContent = 'รู้แล้ว ' + known + ' คำ · ยังต้องฝึกอีก ' + notKnown + ' คำ จาก ' + deck.length + ' คำทั้งหมด';
+  document.getElementById('doneBox').classList.remove('hidden');
+}
+function restart(){ deck=shuffle(filtered()); idx=0; known=0; notKnown=0; done=false; render(); }
+
+buildCats();
+restart();
+</script>
